@@ -170,7 +170,8 @@ if __name__ == "__main__":
 
     print("running model: %s" % options.model)
     train_CNN_rationales_model(data_path, wv_path, model_name=options.model, 
-                                nb_epoch_sentences=options.document_nb_epochs,
+                                nb_epoch_sentences=options.sentence_nb_epochs,
+                                nb_epoch_doc=options.document_nb_epochs,
                                 sentence_dropout=options.dropout_sentence, 
                                 document_dropout=options.dropout_document,
                                 run_name=options.run_name,
