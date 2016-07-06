@@ -84,7 +84,7 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=True, model_name="
     ###################################
     # 1. build & train sentence model #
     ###################################
-    if model_name == 'rationale-CNN':
+    if model_name == "rationale-CNN":
         print("fitting sentence model...")
         r_CNN.build_sentence_model()
         r_CNN.train_sentence_model(documents, nb_epoch=nb_epoch_sentences)
@@ -150,6 +150,7 @@ if __name__ == "__main__":
     data_path = config['paths']['data_path']
     wv_path   = config['paths']['word_vectors_path']
 
+    print("running model: %s" % options.model)
     train_CNN_rationales_model(data_path, wv_path, model_name=options.model, 
                                 nb_epoch_sentences=options.document_nb_epochs,
                                 test_mode=False)
