@@ -272,7 +272,8 @@ class RationaleCNN:
         def scale_merge_output_shape(input_shape):
             input_shape_ls = list(input_shape)[0]
             # should be (batch x sentence embedding), e.g., (None, 96)
-            return (input_shape_ls[0], input_shape_ls[-1])
+            # return (input_shape_ls[0], input_shape_ls[-1])
+            return (None, 96)
         
         weighted_sent_vectors = merge([sent_vectors, sent_weights], 
                                         name="scaled_sentence_vectors",
@@ -351,8 +352,10 @@ class RationaleCNN:
         checkpointer = ModelCheckpoint(filepath="sentence_model_weights.hdf5", 
                                        verbose=1, 
                                        save_best_only=True)
+
+        # @TODO validation split! probably monitor loss
         self.sentence_model.fit(X, y, nb_epoch=nb_epoch, 
-                                callbacks=[checkpointer])
+                                    callbacks=[checkpointer])
 
         self.sentence_model_trained = True
 
