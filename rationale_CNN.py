@@ -1,5 +1,5 @@
 '''
-@authors Byron Wallace, Edward Banner, Ye Zhang
+@authors Byron Wallace, Edward Banner, Ye Zhang, Iain Marshall
 
 A Keras implementation of our "rationale augmented CNN" (https://arxiv.org/abs/1605.04469). Please note that
 the model was originally implemented in Theano; results reported in the paper are from said implementation. 
