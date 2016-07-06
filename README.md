@@ -1,6 +1,8 @@
 # rationale-CNN
 A [Keras](http://keras.io/) implementation of our CNNs with "rationales". Reference article: [https://arxiv.org/abs/1605.04469](https://arxiv.org/abs/1605.04469).
 
+![model schematic](https://raw.githubusercontent.com/bwallace/rationale-CNN/master/figures/rationale-CNN-figure.png)
+
 # configuring
 Your data should be formatted as a CSV with no headers. Each row is expected to have the following format: 
 
