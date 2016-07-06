@@ -18,9 +18,15 @@ Ye Zhang and Byron Wallace. "A Sensitivity Analysis of (and Practitioners' Guide
 from __future__ import print_function
 import pdb
 import sys
+try:
+    reload(sys)
+    sys.setdefaultencoding('utf8')
+except:
+    # almost certainly means Python 3x
+    pass 
+
 import random
-reload(sys)
-sys.setdefaultencoding('utf8')
+
 
 import numpy as np
 
