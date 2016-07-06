@@ -253,7 +253,7 @@ class RationaleCNN:
 
 
         sent_vectors = merge(convolutions, name="sentence_vectors", mode="concat")
-        #sent_vectors = Dropout(self.sent_dropout, name="dropout")(sent_vectors)
+        sent_vectors = Dropout(self.sent_dropout, name="dropout")(sent_vectors)
 
         # now we take a weighted sum of the sentence vectors to induce a document representation
         sent_sm_weights, sm_biases = self.sentence_model.get_layer("sentence_prediction").get_weights()
