@@ -66,7 +66,8 @@ def read_RoB_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-X
 
 
 def train_CNN_rationales_model(data_path, wvs_path, test_mode=True, model_name="rationale-CNN",
-                                nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.2):
+                                nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.2,
+                                sentence_dropout=0.5, document_dropout=0.5):
     documents = read_RoB_data(path=data_path)
     wvs = load_trained_w2v_model(path=wvs_path)
 
@@ -79,7 +80,9 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=True, model_name="
     for d in documents: 
         d.generate_sequences(p)
 
-    r_CNN = rationale_CNN.RationaleCNN(p, filters=[2,3,4], n_filters=32)
+    r_CNN = rationale_CNN.RationaleCNN(p, filters=[3,4,5], n_filters=32, 
+                                        sent_dropout=sentence_dropout, 
+                                        doc_dropout=document_dropout)
 
     ###################################
     # 1. build & train sentence model #
@@ -132,7 +135,7 @@ if __name__ == "__main__":
     
     parser.add_option('-m', '--model', dest="model",
         help="variant of model to run; one of {rationale_CNN, doc_CNN}", 
-        default="rationale_CNN")
+        default="rationale-CNN")
 
     parser.add_option('--se', '--sentence-epochs', dest="sentence_nb_epochs",
         help="number of epochs to (pre-)train sentence model for", 
@@ -141,6 +144,14 @@ if __name__ == "__main__":
     parser.add_option('--de', '--document-epochs', dest="document_nb_epochs",
         help="number of epochs to train the document model for", 
         default=25, type="int")
+
+    parser.add_option('--drops', '--dropout-sentence', dest="dropout_sentence",
+        help="sentence-level dropout", 
+        default=0.5, type="float")
+
+    parser.add_option('--dropd', '--dropout-document', dest="dropout_document",
+        help="document-level dropout", 
+        default=0.5, type="float")
 
     (options, args) = parser.parse_args()
     #import pdb; pdb.set_trace()
@@ -153,4 +164,6 @@ if __name__ == "__main__":
     print("running model: %s" % options.model)
     train_CNN_rationales_model(data_path, wv_path, model_name=options.model, 
                                 nb_epoch_sentences=options.document_nb_epochs,
+                                sentence_dropout=options.dropout_sentence, 
+                                document_dropout=options.dropout_document,
                                 test_mode=False)

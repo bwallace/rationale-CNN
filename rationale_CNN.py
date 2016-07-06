@@ -42,7 +42,7 @@ from keras.callbacks import ModelCheckpoint
 class RationaleCNN:
 
     def __init__(self, preprocessor, filters=None, n_filters=32, 
-                        sent_dropout=0.35, doc_dropout=0.5):
+                        sent_dropout=0.5, doc_dropout=0.5):
         '''
         parameters
         ---
@@ -286,76 +286,6 @@ class RationaleCNN:
         print(self.doc_model.summary())
         
 
-    def train(self, X_train, y_train, X_val=None, y_val=None,
-                nb_epoch=5, batch_size=32, optimizer='adam'):
-        ''' 
-        Accepts an X matrix (presumably some slice of self.X) and corresponding
-        vector of labels. May want to revisit this. 
-
-        X_val and y_val are to be used to validate during training. 
-        '''
-        checkpointer = ModelCheckpoint(filepath="weights.hdf5", 
-                                       verbose=1, 
-                                       save_best_only=(X_val is not None))
-
-        if X_val is not None:
-            self.sentence_model.fit(X_train, y_train,
-                batch_size=batch_size, nb_epoch=nb_epoch,
-                validation_data=(X_val, y_val),
-                verbose=2, callbacks=[checkpointer])
-        else: 
-            # no validation provided
-            self.sentence_model.fit(X_train, y_train,
-                batch_size=batch_size, nb_epoch=nb_epoch, 
-                verbose=2, callbacks=[checkpointer])
-
-    def train_doc_model(documents):
-        # input needs to be: (self.preprocessor.max_doc_len x self.preprocessor.max_sent_len)
-        # I think generate X = (n_instances, doc_len, sent_len) and y = (n_instances)
-        # also need to actually generate predictions for sentences prior to training 
-        # doc level model!!
-        pass 
-
-    '''
-    def build_sentence_model(self):
-
-        # input dim is (max_doc_len x max_sent_len) -- eliding the batch size
-        tokens_input = Input(name='input', 
-                            shape=(self.preprocessor.max_sent_len,), 
-                            dtype='int32')
-
-        # embed the tokens; output will be (p.max_doc_len*p.max_sent_len x embedding_dims)
-        x = Embedding(self.preprocessor.max_features, self.preprocessor.embedding_dims, 
-                        weights=self.preprocessor.init_vectors, name="embedding")(tokens_input)
-
-        x = Dropout(0.1, name="dropout")(x)
-
-        convolutions = []
-        for n_gram in self.ngram_filters:
-            cur_conv = Convolution2D(self.n_filters, 1, 
-                                     n_gram*self.preprocessor.embedding_dims, 
-                                     subsample=(1, self.preprocessor.embedding_dims),
-                                     name="conv2d_"+str(n_gram))(x)
-
-            # this output (n_filters x max_doc_len x 1)
-            one_max = MaxPooling2D(pool_size=(1, self.preprocessor.max_sent_len - n_gram + 1), 
-                                   name="pooling_"+str(n_gram))(cur_conv)
-
-            # flip around, to get (1 x max_doc_len x n_filters)
-            permuted = Permute((3,2,1), name="permute_"+str(n_gram)) (one_max)
-            
-            # drop extra dimension
-            r = Reshape((self.preprocessor.max_doc_len, self.n_filters), 
-                            name="conv_"+str(n_gram))(permuted)
-            
-            convolutions.append(r)
-
-        # merge the filter size convolutions
-        r = merge(convolutions, name="sentence_vectors")
-
-        # now the classification layer...
-    '''
-   
     def build_sentence_model(self):
         ''' 
         Build the *sentence* level model, which operates over, erm, sentences. 
@@ -367,7 +297,7 @@ class RationaleCNN:
                       input_length=self.preprocessor.max_sent_len, 
                       weights=self.preprocessor.init_vectors)(tokens_input)
         
-        x = Dropout(0.1)(x)
+        x = Dropout(0.1)(x) # @TODO 
 
         convolutions = []
         for n_gram in self.ngram_filters:
