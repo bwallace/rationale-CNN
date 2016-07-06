@@ -304,7 +304,7 @@ class RationaleCNN:
                       input_length=self.preprocessor.max_sent_len, 
                       weights=self.preprocessor.init_vectors)(tokens_input)
         
-        x = Dropout(0.1)(x) # @TODO 
+        x = Dropout(0.1)(x) # @TODO; parameterize! 
 
         convolutions = []
         for n_gram in self.ngram_filters:
@@ -327,15 +327,13 @@ class RationaleCNN:
         self.sentence_model = Model(input=tokens_input, output=output)
         print("model built")
         print(self.sentence_model.summary())
-        self.sentence_model.compile(loss='categorical_crossentropy', optimizer="adam")
-
-        self.sentence_embedding_dim = self.sentence_model.layers[-2].output_shape[1]
+        self.sentence_model.compile(loss='categorical_crossentropy', 
+                                    metrics=['accuracy'], optimizer="adagrad")
 
         return self.sentence_model 
 
 
-    def train_sentence_model(self, train_documents, nb_epoch=5, downsample=True, 
-                                    batch_size=128, optimizer='adam'):
+    def train_sentence_model(self, train_documents, nb_epoch=5, downsample=True):
         # assumes sentence sequences have been generated!
         assert(train_documents[0].sentence_sequences is not None)
 
@@ -354,10 +352,15 @@ class RationaleCNN:
         if downsample:
             X, y = RationaleCNN.balanced_sample(X, y)
 
-        #self.train(X[:1000], y[:1000])
-        self.train(X, y, nb_epoch=nb_epoch)
+        #self.train(X, y, nb_epoch=nb_epoch)
+        checkpointer = ModelCheckpoint(filepath="sentence_model_weights.hdf5", 
+                                       verbose=1, 
+                                       save_best_only=True)
+        self.sentence_model.fit(X, y, nb_epoch=nb_epoch, 
+                                callbacks=[checkpointer])
 
         self.sentence_model_trained = True
+
 
     def generate_sentence_predictions(documents, p):
         assert self.sentence_model_trained
