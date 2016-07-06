@@ -12,11 +12,10 @@ Where `doc_id` is an arbitrary unique document identifier; `doc_lbl` is a (binar
 
 You will need to create a simple config.ini file, which points to your data. In particular, it should look like this:
 
-<code>
-[paths]  
-data_path=/Path/to/data.txt  
-word_vectors_path=/Path/to/embeddings.bin  
-</code>
+`[paths]`  
+`data_path=/Path/to/data.txt`  
+`word_vectors_path=/Path/to/embeddings.bin`  
+
 
 
 
