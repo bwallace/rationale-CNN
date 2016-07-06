@@ -67,7 +67,7 @@ def read_RoB_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-X
 
 def train_CNN_rationales_model(data_path, wvs_path, test_mode=True, model_name="rationale-CNN",
                                 nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.2,
-                                sentence_dropout=0.5, document_dropout=0.5):
+                                sentence_dropout=0.5, document_dropout=0.5, run_name="RSG"):
     documents = read_RoB_data(path=data_path)
     wvs = load_trained_w2v_model(path=wvs_path)
 
@@ -115,7 +115,7 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=True, model_name="
     with open("doc_model.json", 'wb') as outf:
         outf.write(json_string)
 
-    checkpointer = ModelCheckpoint(filepath="doc_model_best_weights.hdf5", 
+    checkpointer = ModelCheckpoint(filepath="doc_model_%s.hdf5" % run_name, 
                                     verbose=1,
                                     monitor="val_acc",
                                     save_best_only=True)
@@ -155,6 +155,11 @@ if __name__ == "__main__":
         help="document-level dropout", 
         default=0.5, type="float")
 
+    parser.add_option('--n', '--name', dest="run_name",
+        help="name of run (e.g., `RSG'or `movies')", 
+        default="RSG")
+
+
     (options, args) = parser.parse_args()
     #import pdb; pdb.set_trace()
     config = configparser.ConfigParser()
@@ -168,4 +173,5 @@ if __name__ == "__main__":
                                 nb_epoch_sentences=options.document_nb_epochs,
                                 sentence_dropout=options.dropout_sentence, 
                                 document_dropout=options.dropout_document,
+                                run_name=options.run_name,
                                 test_mode=False)
