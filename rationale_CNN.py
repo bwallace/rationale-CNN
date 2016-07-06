@@ -253,7 +253,7 @@ class RationaleCNN:
 
 
         sent_vectors = merge(convolutions, name="sentence_vectors", mode="concat")
-        sent_vectors = Dropout(self.sent_dropout, name="dropout")(sent_vectors)
+        #sent_vectors = Dropout(self.sent_dropout, name="dropout")(sent_vectors)
 
         # now we take a weighted sum of the sentence vectors to induce a document representation
         sent_sm_weights, sm_biases = self.sentence_model.get_layer("sentence_prediction").get_weights()
@@ -272,8 +272,8 @@ class RationaleCNN:
         def scale_merge_output_shape(input_shape):
             input_shape_ls = list(input_shape)[0]
             # should be (batch x sentence embedding), e.g., (None, 96)
-            # return (input_shape_ls[0], input_shape_ls[-1])
-            return (None, 96)
+            return (input_shape_ls[0], input_shape_ls[-1])
+            #return (None, 96)
         
         weighted_sent_vectors = merge([sent_vectors, sent_weights], 
                                         name="scaled_sentence_vectors",
@@ -282,7 +282,7 @@ class RationaleCNN:
         
 
         doc_vector = weighted_sent_vectors
-        doc_vector = Dropout(self.doc_dropout, name="doc_v_dropout")(doc_vector)
+        #doc_vector = Dropout(self.doc_dropout, name="doc_v_dropout")(doc_vector)
 
         # finally, a sigmoid
         output = Dense(1, activation="sigmoid", name="doc_prediction")(doc_vector)
