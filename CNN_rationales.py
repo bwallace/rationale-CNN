@@ -116,6 +116,8 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=True, model_name="
         outf.write(json_string)
 
     checkpointer = ModelCheckpoint(filepath="doc_model_best_weights.hdf5", 
+                                    verbose=1,
+                                    monitor="val_acc",
                                     save_best_only=True)
 
     r_CNN.doc_model.fit(X_doc, y_doc, nb_epoch=nb_epoch_doc, 
