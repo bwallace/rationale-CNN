@@ -112,10 +112,10 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=True, model_name="
     
     # write out model architecture
     json_string = r_CNN.doc_model.to_json() 
-    with open("doc_model.json", 'w') as outf:
+    with open("%s_model.json" % model_name, 'w') as outf:
         outf.write(json_string)
 
-    checkpointer = ModelCheckpoint(filepath="doc_model_%s.hdf5" % run_name, 
+    checkpointer = ModelCheckpoint(filepath="%s_%s.hdf5" % (model_name, run_name), 
                                     verbose=1,
                                     monitor="val_acc",
                                     save_best_only=True)
