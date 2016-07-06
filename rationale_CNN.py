@@ -93,7 +93,8 @@ class RationaleCNN:
         # sample a number of non-rationales equal to the total
         # number of pos/neg rationales. 
         m = pos_rationale_indices.shape[0] + neg_rationale_indices.shape[0]
-        sampled_non_rationale_indices = np.array(random.sample(non_rationale_indices, m))
+                                        # np.array(random.sample(non_rationale_indices, m)) 
+        sampled_non_rationale_indices = np.random.choice(non_rationale_indices, m, replace=False)
 
         train_indices = np.concatenate([pos_rationale_indices, neg_rationale_indices, sampled_non_rationale_indices])
         np.random.shuffle(train_indices) # why not
