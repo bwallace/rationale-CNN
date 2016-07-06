@@ -343,12 +343,7 @@ class RationaleCNN:
             X.extend(d.sentence_sequences)
             y.extend(d.sentences_y)
 
-        # @TODO sub-sample magic?
         X, y = np.asarray(X), np.asarray(y)
-        
-        #import pdb; pdb.set_trace()
-
-        # downsample
         if downsample:
             X, y = RationaleCNN.balanced_sample(X, y)
 
