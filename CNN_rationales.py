@@ -120,6 +120,7 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=True, model_name="
                                     monitor="val_acc",
                                     save_best_only=True)
 
+    #import pdb; pdb.set_trace()
     r_CNN.doc_model.fit(X_doc, y_doc, nb_epoch=nb_epoch_doc, 
                         validation_split=val_split,
                         callbacks=[checkpointer])
@@ -159,6 +160,8 @@ if __name__ == "__main__":
         help="name of run (e.g., `RSG'or `movies')", 
         default="RSG")
 
+    parser.add_option('--tm', '--test-mode', dest="test_mode",
+        help="run in test mode?", action='store_true', default=False)
 
     (options, args) = parser.parse_args()
     #import pdb; pdb.set_trace()
@@ -175,4 +178,4 @@ if __name__ == "__main__":
                                 sentence_dropout=options.dropout_sentence, 
                                 document_dropout=options.dropout_document,
                                 run_name=options.run_name,
-                                test_mode=False)
+                                test_mode=options.test_mode)
