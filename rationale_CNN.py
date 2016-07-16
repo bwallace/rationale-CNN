@@ -72,7 +72,7 @@ class RationaleCNN:
     def get_weighted_sum_func(X, weights):
         # @TODO.. add sentence preds!
         def weighted_sum(X):
-            return K.sum(np.multiply(X, weights), axis=0)
+            return K.sum(np.multiply(X, weights), axis=-1)
         
         #return K.sum(X, axis=0) 
         return weighted_sum
@@ -239,7 +239,7 @@ class RationaleCNN:
                                      weights=[init_weights, biases])(x)
 
             # this output (n_filters x max_doc_len x 1)
-            one_max = MaxPooling2D(pool_size=(1, self.preprocessor.max_sent_len - n_gram + 1), 
+            one_max = MaxPooling2D(pool_size=(1, self.preprocessor.max_sent_len-n_gram+1), 
                                    name="pooling_"+str(n_gram))(cur_conv)
 
             # flip around, to get (1 x max_doc_len x n_filters)
@@ -264,27 +264,97 @@ class RationaleCNN:
   
         sw_layer = Lambda(lambda x: K.max(x[:,0:2], axis=1), output_shape=(1,)) 
         sent_weights = TimeDistributed(sw_layer, name="sentence_weights")(sent_preds)
-        
+ 
         def scale_merge(inputs):
             sent_vectors, sent_weights = inputs[0], inputs[1]
-            return K.transpose(K.dot(K.transpose(sent_vectors[-1,:]), sent_weights[-1,:]))
+            #return K.dot(sent_vectors, sent_weights)
+            return K.batch_dot(sent_vectors, sent_weights)
+
+            #return K.transpose(K.dot(K.transpose(sent_vectors[-1,:]), sent_weights[-1,:]))
+
+            # maybe by playing around with dot_axes??!?!
+            #return K.transpose(K.dot(sent_vectors, sent_weights))
+            #return K.transpose(K.dot(sent_vectors, sent_weights), keep_dims=True)#, keep_dims=True)
+            #return K.dot(sent_vectors, sent_weights)
 
         def scale_merge_output_shape(input_shape):
+            # this is expected now to be (None x sentence_vec_length x doc_length)
+            # or, e.g., (None, 96, 200)
             input_shape_ls = list(input_shape)[0]
+            print("OUTPUT SHAPE: %s x %s" % (input_shape_ls[0], input_shape_ls[1]))
             # should be (batch x sentence embedding), e.g., (None, 96)
-            return (input_shape_ls[0], input_shape_ls[-1])
+            return (input_shape_ls[0], input_shape_ls[1])
             #return (None, 96)
+
+        '''
+        def scale_vectors(inputs):
+            sent_vectors, sent_weights = inputs[0], inputs[1]
+            return K.dot(sent_vectors, sent_weights)
+ 
+        def scale_vectors_shape(inputs):
+            vectors_shape = list(input_shape)[0]
+            return vectors_shape
+        '''
+
+        # 7/15
+        #sent_weights = Reshape((200,), name="reshaped_sentence_weights")(sent_weights)
+        # sent vectors will be, e.g., (None, 200, 96)
+        # -> reshuffle for dot product below in merge -> (None, 96, 200)
+        sent_vectors = Permute((2, 1), name="permuted_sent_vectors")(sent_vectors)
+
+        #scaled_sent_vectors = merge([sent_vectors, sent_weights], 
+        #                        name="scaled_vectors",
+        #                        mode=scale_vectors, 
+        #                        output_shape=scale_vectors_shape)
+        #sent_weights = Reshape((200,))(sent_weights)
+        # when using 'mul'
+        # Exception: Only layers of same output shape can be merged using mul mode. Layer shapes: [(None, 96, 200), (None, 200)]
         
-        weighted_sent_vectors = merge([sent_vectors, sent_weights], 
-                                        name="scaled_sentence_vectors",
+       
+        '''
+        scaled_sent_vectors = merge([sent_vectors, sent_weights],
+                                        name="scaled_vectors", mode="dot")
+                                        #dot_axes=[1,2])
+                                        #concat_axis=-1)
+        
+        def sum_sentence_vectors(x):
+            return K.sum(x, axis=1)
+
+        def sum_sentence_vector_output_shape(input_shape): 
+            # should be (batch x max_doc_len x sentence_dim)
+            shape = list(input_shape) 
+            # something like (None, 96), where 96 is the
+            # length of induced sentence vectors
+            return (shape[0], shape[-1])
+
+        doc_vector = Lambda(sum_sentence_vectors, 
+                                output_shape=sum_sentence_vector_output_shape,
+                                name="document_vector")(scaled_sent_vectors)
+
+        '''
+        doc_vector = merge([sent_vectors, sent_weights], 
+                                        name="doc_vector",
                                         mode=scale_merge,
                                         output_shape=scale_merge_output_shape)
-        
 
-        doc_vector = weighted_sent_vectors
+        # TODO remove hardcoding...
+        doc_vector = Reshape((96,), name="reshaped_doc")(doc_vector)
+
+        #weighted_sents 
+        '''
+        doc_vector = merge([sent_vectors, sent_weights],
+                            name="doc_vector", mode="mul")
+                            #dot_axes=([2,2]))
+                            #dot_axes=(2,2))
+
+        '''
+        #doc_vector = K.dot(sent_vectors, sent_weights)
+        
         #doc_vector = Dropout(self.doc_dropout, name="doc_v_dropout")(doc_vector)
 
         # finally, a sigmoid
+        #doc_vector2 = Flatten()(doc_vector)
+        #doc_vector = Reshape((96,), name="reshaped_doc")(doc_vector)
         output = Dense(1, activation="sigmoid", name="doc_prediction")(doc_vector)
         
         # ... and compile
