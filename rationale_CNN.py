@@ -259,10 +259,12 @@ class RationaleCNN:
 
         # now we take a weighted sum of the sentence vectors to induce a document representation
         sent_sm_weights, sm_biases = self.sentence_model.get_layer("sentence_prediction").get_weights()
+
+        print("end-to-end training is: %s" % self.end_to_end_train)
         sent_pred_model = Dense(3, activation="softmax", name="sentence_prediction", 
                                     weights=[sent_sm_weights, sm_biases], 
                                     trainable=self.end_to_end_train)
-                                     
+
         # note that using the sent_preds directly works as expected...
         sent_preds = TimeDistributed(sent_pred_model, name="sentence_predictions")(sent_vectors)
   
@@ -314,7 +316,7 @@ class RationaleCNN:
                       input_length=self.preprocessor.max_sent_len, 
                       weights=self.preprocessor.init_vectors)(tokens_input)
         
-        x = Dropout(0.1)(x) # @TODO; parameterize! 
+        x = Dropout(self.sent_dropout)(x) # @TODO; parameterize! 
 
         convolutions = []
         for n_gram in self.ngram_filters:
