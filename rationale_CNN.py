@@ -213,7 +213,7 @@ class RationaleCNN:
                      name="reshape")(x)
 
         
-        total_sentence_dims = self.ngram_filters * self.n_filters 
+        total_sentence_dims = len(self.ngram_filters) * self.n_filters 
 
         convolutions = []
         for n_gram in self.ngram_filters:
@@ -288,7 +288,10 @@ class RationaleCNN:
                                         output_shape=scale_merge_output_shape)
 
 
+        # trim extra dim
         doc_vector = Reshape((total_sentence_dims,), name="reshaped_doc")(doc_vector)
+        doc_vector = Dropout(self.doc_dropout, name="doc_v_dropout")(doc_vector)
+
         output = Dense(1, activation="sigmoid", name="doc_prediction")(doc_vector)
         
         # ... and compile
