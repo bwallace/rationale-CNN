@@ -95,6 +95,7 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=False,
                                     max_sent_len=max_sent_len, 
                                     max_doc_len=max_doc_len, 
                                     wvs=wvs)
+
     p.preprocess(all_sentences)
     for d in documents: 
         d.generate_sequences(p)
@@ -198,11 +199,11 @@ if __name__ == "__main__":
 
     parser.add_option('--mf', '--max-features', dest="max_features",
         help="maximum number of unique tokens", 
-        action='store_true', default=False)
+        default=20000, type="int")
 
     parser.add_option('--tr', '--end-to-end-train', dest="end_to_end_train",
         help="continue training sentence softmax parameters?", 
-        default=20000, type="int")
+        action='store_true', default=False)
 
     (options, args) = parser.parse_args()
   

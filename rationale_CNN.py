@@ -436,10 +436,6 @@ class Document:
             dummy_rows = np.zeros((p.max_doc_len-n_sentences, p.max_sent_len), dtype='int32')
             X = np.vstack((X, dummy_rows))
 
-        #print("!: %s" % str(X.shape))   
-        #if X.shape[0] != 500:
-        #    import pdb; pdb.set_trace()
-
         return np.array(X)
 
 class Preprocessor:
@@ -474,7 +470,6 @@ class Preprocessor:
         of texts in all_texts. Needs to be called before train!
         '''
         self.raw_texts = all_docs
-        #self.build_sequences()
         self.fit_tokenizer()
         if self.use_pretrained_embeddings:
             self.init_word_vectors()
