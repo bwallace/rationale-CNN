@@ -1,6 +1,7 @@
 from __future__ import print_function
 import math
 import csv
+import random 
 import sys
 csv.field_size_limit(sys.maxsize)
 import os 
@@ -31,6 +32,8 @@ def read_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-Xy-w-
     Assumes data is in CSV with following format:
 
         doc_id,doc_lbl,sentence_number,sentence,sentence_lbl
+
+    Note that we assume sentence_lbl \in {-1, 1}
     '''
     df = pd.read_csv(path)
     # replace empty entries (which were formerly being converted to NaNs)
@@ -72,9 +75,14 @@ def read_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-Xy-w-
 
 def train_CNN_rationales_model(data_path, wvs_path, test_mode=False, 
                                 model_name="rationale-CNN", 
-                                nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.2,
-                                sentence_dropout=0.5, document_dropout=0.5, run_name="RSG"):
+                                nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.1,
+                                sentence_dropout=0.5, document_dropout=0.5, run_name="RSG",
+                                shuffle_data=False):
     documents = read_data(path=data_path)
+    
+    if shuffle_data: 
+        random.shuffle(documents)
+
     wvs = load_trained_w2v_model(path=wvs_path)
 
     all_sentences = []
@@ -161,12 +169,20 @@ if __name__ == "__main__":
         help="document-level dropout", 
         default=0.5, type="float")
 
+    parser.add_option('--val', '--val_split', dest="val_split",
+        help="percent of data to hold out for validation", 
+        default=0.2, type="float")
+
     parser.add_option('--n', '--name', dest="run_name",
         help="name of run (e.g., `movies')", 
         default="movies")
 
     parser.add_option('--tm', '--test-mode', dest="test_mode",
         help="run in test mode?", action='store_true', default=False)
+
+    parser.add_option('--sd', '--shuffle', dest="shuffle_data",
+        help="shuffle data?", action='store_true', default=False)
+
 
     (options, args) = parser.parse_args()
   
@@ -183,4 +199,6 @@ if __name__ == "__main__":
                                 sentence_dropout=options.dropout_sentence, 
                                 document_dropout=options.dropout_document,
                                 run_name=options.run_name,
-                                test_mode=options.test_mode)
+                                test_mode=options.test_mode,
+                                val_split=options.val_split,
+                                shuffle_data=options.shuffle_data)
