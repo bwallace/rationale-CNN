@@ -25,13 +25,14 @@ def load_trained_w2v_model(path="/work/03213/bwallace/maverick/RoB_CNNs/PubMed-w
     m = Word2Vec.load_word2vec_format(path, binary=True)
     return m
 
-def read_RoB_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-Xy-w-sentences2-Random-sequence-generation.txt"):
+def read_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-Xy-w-sentences2-Random-sequence-generation.txt",
+                delimiter=","):
     ''' 
     Assumes data is in CSV with following format:
 
         doc_id,doc_lbl,sentence_number,sentence,sentence_lbl
     '''
-    df = pd.read_csv(path)
+    df = pd.read_csv(path, delimiter=delimiter)
     docs = df.groupby("doc_id")
     documents = []
     for doc_id, doc in docs:
@@ -65,10 +66,11 @@ def read_RoB_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-X
     return documents
 
 
-def train_CNN_rationales_model(data_path, wvs_path, test_mode=True, model_name="rationale-CNN",
+def train_CNN_rationales_model(data_path, wvs_path, test_mode=True, 
+                                model_name="rationale-CNN", delimiter="\t",
                                 nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.2,
                                 sentence_dropout=0.5, document_dropout=0.5, run_name="RSG"):
-    documents = read_RoB_data(path=data_path)
+    documents = read_data(path=data_path)
     wvs = load_trained_w2v_model(path=wvs_path)
 
     all_sentences = []
@@ -100,7 +102,7 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=True, model_name="
         print("running **doc_CNN**!")
         r_CNN.build_simple_doc_model()
     else: 
-        r_CNN.build_doc_model()
+        r_CNN.build_RA_CNN_model()
 
     X_doc, y_doc = [], []
     for d in documents:
@@ -120,7 +122,6 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=True, model_name="
                                     monitor="val_acc",
                                     save_best_only=True)
 
-    #import pdb; pdb.set_trace()
     r_CNN.doc_model.fit(X_doc, y_doc, nb_epoch=nb_epoch_doc, 
                         validation_split=val_split,
                         callbacks=[checkpointer])
@@ -139,6 +140,10 @@ if __name__ == "__main__":
     parser.add_option('-m', '--model', dest="model",
         help="variant of model to run; one of {rationale_CNN, doc_CNN}", 
         default="rationale-CNN")
+
+    parser.add_option('-d', '--delimiter', dest="delimiter",
+        help="delimiter used in data file (either ',' or '\t')", 
+        default=",")
 
     parser.add_option('--se', '--sentence-epochs', dest="sentence_nb_epochs",
         help="number of epochs to (pre-)train sentence model for", 
@@ -164,7 +169,7 @@ if __name__ == "__main__":
         help="run in test mode?", action='store_true', default=False)
 
     (options, args) = parser.parse_args()
-    #import pdb; pdb.set_trace()
+  
     config = configparser.ConfigParser()
     print("reading config file: %s" % options.inifile)
     config.read(options.inifile)
@@ -173,6 +178,7 @@ if __name__ == "__main__":
 
     print("running model: %s" % options.model)
     train_CNN_rationales_model(data_path, wv_path, model_name=options.model, 
+                                delimiter=options.delimiter,
                                 nb_epoch_sentences=options.sentence_nb_epochs,
                                 nb_epoch_doc=options.document_nb_epochs,
                                 sentence_dropout=options.dropout_sentence, 
