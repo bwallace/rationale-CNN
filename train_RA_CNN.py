@@ -102,7 +102,8 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=False,
 
     r_CNN = rationale_CNN.RationaleCNN(p, filters=[3,4,5], n_filters=32, 
                                         sent_dropout=sentence_dropout, 
-                                        doc_dropout=document_dropout)
+                                        doc_dropout=document_dropout,
+                                        end_to_end_train=end_to_end_train)
 
     ###################################
     # 1. build & train sentence model #
@@ -120,7 +121,7 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=False,
         print("running **doc_CNN**!")
         r_CNN.build_simple_doc_model()
     else: 
-        r_CNN.build_RA_CNN_model(end_to_end_train=end_to_end_train)
+        r_CNN.build_RA_CNN_model()
 
     X_doc, y_doc = [], []
     for d in documents:

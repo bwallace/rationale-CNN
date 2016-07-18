@@ -48,7 +48,8 @@ from keras.callbacks import ModelCheckpoint
 class RationaleCNN:
 
     def __init__(self, preprocessor, filters=None, n_filters=32, 
-                        sent_dropout=0.5, doc_dropout=0.5, end_to_end_train=False):
+                        sent_dropout=0.5, doc_dropout=0.5, 
+                        end_to_end_train=False):
         '''
         parameters
         ---
