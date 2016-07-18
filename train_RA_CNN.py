@@ -77,7 +77,8 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=False,
                                 model_name="rationale-CNN", 
                                 nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.1,
                                 sentence_dropout=0.5, document_dropout=0.5, run_name="RSG",
-                                shuffle_data=False, max_sent_len=25, max_doc_len=200):
+                                shuffle_data=False, max_features=20000, 
+                                max_sent_len=25, max_doc_len=200):
     documents = read_data(path=data_path)
     
     if shuffle_data: 
@@ -89,7 +90,10 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=False,
     for d in documents: 
         all_sentences.extend(d.sentences)
 
-    p = rationale_CNN.Preprocessor(max_features=20000, max_sent_len=25, max_doc_len=200, wvs=wvs)
+    p = rationale_CNN.Preprocessor(max_features=max_features, 
+                                    max_sent_len=max_sent_len, 
+                                    max_doc_len=max_doc_len, 
+                                    wvs=wvs)
     p.preprocess(all_sentences)
     for d in documents: 
         d.generate_sequences(p)
@@ -191,6 +195,10 @@ if __name__ == "__main__":
         help="maximum length (in tokens) of a given sentence", 
         default=10, type="int")
 
+    parser.add_option('--mf', '--max-features', dest="max_features",
+        help="maximum number of unique tokens", 
+        default=20000, type="int")
+
     (options, args) = parser.parse_args()
   
     config = configparser.ConfigParser()
@@ -210,4 +218,5 @@ if __name__ == "__main__":
                                 val_split=options.val_split,
                                 shuffle_data=options.shuffle_data,
                                 max_sent_len=options.max_sent_len,
-                                max_doc_len=options.max_doc_len)
+                                max_doc_len=options.max_doc_len,
+                                max_features=options.max_features)
