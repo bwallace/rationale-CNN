@@ -187,7 +187,7 @@ if __name__ == "__main__":
         help="maximum length (in sentences) of a given doc", 
         default=50, type="int")
 
-   parser.add_option('--msl', '--max-sent-length', dest="max_sent_len",
+    parser.add_option('--msl', '--max-sent-length', dest="max_sent_len",
         help="maximum length (in tokens) of a given sentence", 
         default=10, type="int")
 
