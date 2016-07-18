@@ -78,7 +78,8 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=False,
                                 nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.1,
                                 sentence_dropout=0.5, document_dropout=0.5, run_name="RSG",
                                 shuffle_data=False, max_features=20000, 
-                                max_sent_len=25, max_doc_len=200):
+                                max_sent_len=25, max_doc_len=200,
+                                end_to_end_train=False):
     documents = read_data(path=data_path)
     
     if shuffle_data: 
@@ -118,7 +119,7 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=False,
         print("running **doc_CNN**!")
         r_CNN.build_simple_doc_model()
     else: 
-        r_CNN.build_RA_CNN_model()
+        r_CNN.build_RA_CNN_model(end_to_end_train=end_to_end_train)
 
     X_doc, y_doc = [], []
     for d in documents:
@@ -197,6 +198,10 @@ if __name__ == "__main__":
 
     parser.add_option('--mf', '--max-features', dest="max_features",
         help="maximum number of unique tokens", 
+        action='store_true', default=False)
+
+    parser.add_option('--tr', '--end-to-end-train', dest="end_to_end_train",
+        help="continue training sentence softmax parameters?", 
         default=20000, type="int")
 
     (options, args) = parser.parse_args()
@@ -219,4 +224,5 @@ if __name__ == "__main__":
                                 shuffle_data=options.shuffle_data,
                                 max_sent_len=options.max_sent_len,
                                 max_doc_len=options.max_doc_len,
-                                max_features=options.max_features)
+                                max_features=options.max_features,
+                                end_to_end_train=options.end_to_end_train)

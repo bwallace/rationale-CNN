@@ -48,7 +48,7 @@ from keras.callbacks import ModelCheckpoint
 class RationaleCNN:
 
     def __init__(self, preprocessor, filters=None, n_filters=32, 
-                        sent_dropout=0.5, doc_dropout=0.5):
+                        sent_dropout=0.5, doc_dropout=0.5, end_to_end_train=False):
         '''
         parameters
         ---
@@ -260,7 +260,9 @@ class RationaleCNN:
         # now we take a weighted sum of the sentence vectors to induce a document representation
         sent_sm_weights, sm_biases = self.sentence_model.get_layer("sentence_prediction").get_weights()
         sent_pred_model = Dense(3, activation="softmax", name="sentence_prediction", 
-                                    weights=[sent_sm_weights, sm_biases]) 
+                                    weights=[sent_sm_weights, sm_biases], 
+                                    trainable=self.end_to_end_train)
+                                     
         # note that using the sent_preds directly works as expected...
         sent_preds = TimeDistributed(sent_pred_model, name="sentence_predictions")(sent_vectors)
   
