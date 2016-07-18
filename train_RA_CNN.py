@@ -77,7 +77,7 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=False,
                                 model_name="rationale-CNN", 
                                 nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.1,
                                 sentence_dropout=0.5, document_dropout=0.5, run_name="RSG",
-                                shuffle_data=False):
+                                shuffle_data=False, max_sent_len=25, max_doc_len=200):
     documents = read_data(path=data_path)
     
     if shuffle_data: 
@@ -183,6 +183,13 @@ if __name__ == "__main__":
     parser.add_option('--sd', '--shuffle', dest="shuffle_data",
         help="shuffle data?", action='store_true', default=False)
 
+    parser.add_option('--mdl', '--max-doc-length', dest="max_doc_len",
+        help="maximum length (in sentences) of a given doc", 
+        default=50, type="int")
+
+   parser.add_option('--msl', '--max-sent-length', dest="max_sent_len",
+        help="maximum length (in tokens) of a given sentence", 
+        default=10, type="int")
 
     (options, args) = parser.parse_args()
   
@@ -201,4 +208,6 @@ if __name__ == "__main__":
                                 run_name=options.run_name,
                                 test_mode=options.test_mode,
                                 val_split=options.val_split,
-                                shuffle_data=options.shuffle_data)
+                                shuffle_data=options.shuffle_data,
+                                max_sent_len=options.max_sent_len,
+                                max_doc_len=options.max_doc_len)
