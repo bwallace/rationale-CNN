@@ -1,4 +1,5 @@
 from __future__ import print_function
+import math
 import csv
 import sys
 csv.field_size_limit(sys.maxsize)
@@ -25,14 +26,17 @@ def load_trained_w2v_model(path="/work/03213/bwallace/maverick/RoB_CNNs/PubMed-w
     m = Word2Vec.load_word2vec_format(path, binary=True)
     return m
 
-def read_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-Xy-w-sentences2-Random-sequence-generation.txt",
-                delimiter=","):
+def read_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-Xy-w-sentences2-Random-sequence-generation.txt"):
     ''' 
     Assumes data is in CSV with following format:
 
         doc_id,doc_lbl,sentence_number,sentence,sentence_lbl
     '''
-    df = pd.read_csv(path, delimiter=delimiter)
+    df = pd.read_csv(path)
+    # replace empty entries (which were formerly being converted to NaNs)
+    # with ""
+    df = df.replace(np.nan,' ', regex=True)
+
     docs = df.groupby("doc_id")
     documents = []
     for doc_id, doc in docs:
@@ -66,8 +70,8 @@ def read_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-Xy-w-
     return documents
 
 
-def train_CNN_rationales_model(data_path, wvs_path, test_mode=True, 
-                                model_name="rationale-CNN", delimiter="\t",
+def train_CNN_rationales_model(data_path, wvs_path, test_mode=False, 
+                                model_name="rationale-CNN", 
                                 nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.2,
                                 sentence_dropout=0.5, document_dropout=0.5, run_name="RSG"):
     documents = read_data(path=data_path)
@@ -141,10 +145,6 @@ if __name__ == "__main__":
         help="variant of model to run; one of {rationale_CNN, doc_CNN}", 
         default="rationale-CNN")
 
-    parser.add_option('-d', '--delimiter', dest="delimiter",
-        help="delimiter used in data file (either ',' or '\t')", 
-        default=",")
-
     parser.add_option('--se', '--sentence-epochs', dest="sentence_nb_epochs",
         help="number of epochs to (pre-)train sentence model for", 
         default=20, type="int")
@@ -162,8 +162,8 @@ if __name__ == "__main__":
         default=0.5, type="float")
 
     parser.add_option('--n', '--name', dest="run_name",
-        help="name of run (e.g., `RSG'or `movies')", 
-        default="RSG")
+        help="name of run (e.g., `movies')", 
+        default="movies")
 
     parser.add_option('--tm', '--test-mode', dest="test_mode",
         help="run in test mode?", action='store_true', default=False)
@@ -178,7 +178,6 @@ if __name__ == "__main__":
 
     print("running model: %s" % options.model)
     train_CNN_rationales_model(data_path, wv_path, model_name=options.model, 
-                                delimiter=options.delimiter,
                                 nb_epoch_sentences=options.sentence_nb_epochs,
                                 nb_epoch_doc=options.document_nb_epochs,
                                 sentence_dropout=options.dropout_sentence, 
