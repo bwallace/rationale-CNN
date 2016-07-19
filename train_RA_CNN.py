@@ -118,7 +118,7 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
                     sent_dropout, best_performance))
         if best_performance > best_so_far:
             best_so_far = best_performance
-            sent_dropout_star = sent_dropout_rate
+            sent_dropout_star = sent_dropout
 
     print ("best dropout: %s" % sent_dropout_star)
 
