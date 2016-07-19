@@ -355,7 +355,7 @@ class RationaleCNN:
         early_stopping = EarlyStopping(monitor='val_acc', patience=2)
         self.sentence_model.fit(X, y, nb_epoch=nb_epoch, 
                                     #callbacks=[checkpointer],
-                                    callbacks=[early_stopping]
+                                    callbacks=[early_stopping],
                                     validation_split=sent_val_split)
 
         self.sentence_model_trained = True
