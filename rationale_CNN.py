@@ -352,7 +352,7 @@ class RationaleCNN:
                                        save_best_only=True)
         '''
 
-        early_stopping = EarlyStopping(monitor='val_acc', patience=2)
+        early_stopping = EarlyStopping(monitor='val_acc', patience=3)
         self.sentence_model.fit(X, y, nb_epoch=nb_epoch, 
                                     #callbacks=[checkpointer],
                                     callbacks=[early_stopping],
