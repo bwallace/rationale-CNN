@@ -68,6 +68,7 @@ class RationaleCNN:
         self.sent_dropout = sent_dropout
         self.doc_dropout  = doc_dropout
         self.sentence_model_trained = False 
+        self.end_to_end_train = end_to_end_train
 
     @staticmethod
     def get_weighted_sum_func(X, weights):
