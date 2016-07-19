@@ -96,7 +96,7 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
     if shuffle_data: 
         random.shuffle(documents)
 
-    for sent_dropout in np.range(sent_dropout_range[0], sent_dropout_range[1], num_steps)
+    for sent_dropout in np.range(sent_dropout_range[0], sent_dropout_range[1], num_steps):
         train_CNN_rationales_model(data_path, wvs_path, documents=documents, 
                                 test_mode=test_mode, 
                                 model_name=model_name, 
