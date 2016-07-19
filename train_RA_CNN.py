@@ -2,6 +2,7 @@ from __future__ import print_function
 import math
 import csv
 import random 
+random.seed(1337) # for reproducibility
 import sys
 csv.field_size_limit(sys.maxsize)
 import os 
@@ -21,6 +22,7 @@ from keras.callbacks import ModelCheckpoint
 
 import rationale_CNN
 from rationale_CNN import Document
+
 
 
 def load_trained_w2v_model(path="/work/03213/bwallace/maverick/RoB_CNNs/PubMed-w2v.bin"):
