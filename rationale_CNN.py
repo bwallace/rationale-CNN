@@ -331,8 +331,8 @@ class RationaleCNN:
         return self.sentence_model 
 
 
-    def train_sentence_model(self, train_documents, nb_epoch=5, downsample=True, 
-                                sent_val_split=.2):
+    def train_sentence_model(self, train_documents, nb_epoch=5, downsample=True, sent_val_split=.2, 
+                                sentence_model_weights_path="sentence_model_weights.hdf5"):
         # assumes sentence sequences have been generated!
         assert(train_documents[0].sentence_sequences is not None)
 
@@ -346,17 +346,17 @@ class RationaleCNN:
         if downsample:
             X, y = RationaleCNN.balanced_sample(X, y)
 
-        '''
-        checkpointer = ModelCheckpoint(filepath="sentence_model_weights.hdf5", 
+        
+        checkpointer = ModelCheckpoint(filepath=sentence_model_weights_path, 
                                        verbose=1, 
                                        save_best_only=True)
-        '''
-
-        early_stopping = EarlyStopping(monitor='val_acc', patience=3)
+   
         self.sentence_model.fit(X, y, nb_epoch=nb_epoch, 
-                                    #callbacks=[checkpointer],
-                                    callbacks=[early_stopping],
+                                    callbacks=[checkpointer],
                                     validation_split=sent_val_split)
+
+        # reload best weights
+        self.sentence_model.load_weights(sentence_model_weights_path)
 
         self.sentence_model_trained = True
 
