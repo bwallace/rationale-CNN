@@ -43,7 +43,7 @@ from keras.layers.embeddings import Embedding
 from keras.layers.convolutional import Convolution1D, Convolution2D, MaxPooling1D, MaxPooling2D
 from keras.utils.np_utils import accuracy
 from keras.preprocessing.text import text_to_word_sequence, Tokenizer
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 
 class RationaleCNN:
 
@@ -102,22 +102,6 @@ class RationaleCNN:
         np.random.shuffle(train_indices) # why not
         return X[train_indices,:], y[train_indices]
 
-    def make_sentence_predictions(self):
-        pass 
-
-    def get_conv_layers_from_sentence_model():
-        layers_to_weights = {}
-        for ngram in self.ngram_filters:
-            layer_name = "conv_" + str(ngram)
-            cur_conv_layer = self.sentence_model.get_layer(layer_name)
-            weights, biases = cur_conv_layer.get_weights()
-
-            # here it gets tricky because we need
-            # so, e.g., (32 x 200 x 3 x 1) -> (32 x 3 x 200 x 1)
-            # we do this because reshape by default iterates over
-            # the last dimension fastest
-            # swapped = np.swapaxes(X, 1, 2)
-            # Xp = swapped.reshape(32, 1, 1, 600)
 
     def build_simple_doc_model(self):
         # maintains sentence structure, but does not impose weights.
@@ -347,7 +331,8 @@ class RationaleCNN:
         return self.sentence_model 
 
 
-    def train_sentence_model(self, train_documents, nb_epoch=5, downsample=True):
+    def train_sentence_model(self, train_documents, nb_epoch=5, downsample=True, 
+                                sent_val_split=.2):
         # assumes sentence sequences have been generated!
         assert(train_documents[0].sentence_sequences is not None)
 
@@ -361,14 +346,17 @@ class RationaleCNN:
         if downsample:
             X, y = RationaleCNN.balanced_sample(X, y)
 
-        #self.train(X, y, nb_epoch=nb_epoch)
+        '''
         checkpointer = ModelCheckpoint(filepath="sentence_model_weights.hdf5", 
                                        verbose=1, 
                                        save_best_only=True)
+        '''
 
-        # @TODO validation split! probably monitor loss
+        early_stopping = EarlyStopping(monitor='val_acc', patience=2)
         self.sentence_model.fit(X, y, nb_epoch=nb_epoch, 
-                                    callbacks=[checkpointer])
+                                    #callbacks=[checkpointer],
+                                    callbacks=[early_stopping]
+                                    validation_split=sent_val_split)
 
         self.sentence_model_trained = True
 
