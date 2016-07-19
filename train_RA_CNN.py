@@ -75,7 +75,7 @@ def read_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-Xy-w-
 
 def train_CNN_rationales_model(data_path, wvs_path, test_mode=False, 
                                 model_name="rationale-CNN", 
-                                nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.1,
+                                nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.2,
                                 sentence_dropout=0.5, document_dropout=0.5, run_name="RSG",
                                 shuffle_data=False, max_features=20000, 
                                 max_sent_len=25, max_doc_len=200,
