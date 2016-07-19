@@ -75,17 +75,54 @@ def read_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-Xy-w-
     return documents
 
 
-def train_CNN_rationales_model(data_path, wvs_path, test_mode=False, 
+
+
+def line_search_train(data_path, wvs_path, documents=None, test_mode=False, 
+                                model_name="rationale-CNN", 
+                                nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.2,
+                                sent_dropout_range=(0,.9), num_steps=10,
+                                document_dropout=0.5, run_name="RSG",
+                                shuffle_data=False, max_features=20000, 
+                                max_sent_len=25, max_doc_len=200,
+                                end_to_end_train=False):
+    '''
+    Note: at the moment this is using *all* training data; obviously need to set 
+    aside the actual test fold (as we did for the paper experiments in Theano
+    implementation).
+    '''
+
+    # read in the docs just once. 
+    documents = read_data(path=data_path)
+    if shuffle_data: 
+        random.shuffle(documents)
+
+    for sent_dropout in np.range(sent_dropout_range[0], sent_dropout_range[1], num_steps)
+        train_CNN_rationales_model(data_path, wvs_path, documents=documents, 
+                                test_mode=test_mode, 
+                                model_name=model_name, 
+                                nb_epoch_sentences=nb_epoch_sentences, 
+                                nb_epoch_doc=nb_epoch_doc, 
+                                val_split=val_split,
+                                sentence_dropout=sent_dropout, 
+                                document_dropout=document_dropout, 
+                                run_name=run_name,
+                                max_features=max_features, 
+                                max_sent_len=max_sent_len, 
+                                max_doc_len=max_doc_len,
+                                end_to_end_train=end_to_end_train)
+
+def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=False, 
                                 model_name="rationale-CNN", 
                                 nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.2,
                                 sentence_dropout=0.5, document_dropout=0.5, run_name="RSG",
                                 shuffle_data=False, max_features=20000, 
                                 max_sent_len=25, max_doc_len=200,
                                 end_to_end_train=False):
-    documents = read_data(path=data_path)
     
-    if shuffle_data: 
-        random.shuffle(documents)
+    if documents is None:
+        documents = read_data(path=data_path)
+        if shuffle_data: 
+            random.shuffle(documents)
 
     wvs = load_trained_w2v_model(path=wvs_path)
 
@@ -143,10 +180,11 @@ def train_CNN_rationales_model(data_path, wvs_path, test_mode=False,
                                     monitor="val_acc",
                                     save_best_only=True)
 
-    r_CNN.doc_model.fit(X_doc, y_doc, nb_epoch=nb_epoch_doc, 
+    hist = r_CNN.doc_model.fit(X_doc, y_doc, nb_epoch=nb_epoch_doc, 
                         validation_split=val_split,
                         callbacks=[checkpointer])
 
+    import pdb; pdb.set_trace()
     return r_CNN, documents, p, X_doc, np.array(y_doc)
 
 
@@ -208,6 +246,10 @@ if __name__ == "__main__":
         help="continue training sentence softmax parameters?", 
         action='store_true', default=False)
 
+    parser.add_option('--ls', '--line-search', dest="line_search_sent_dropout",
+        help="line search over sentence dropout parameter?", 
+        action='store_true', default=False)
+
     (options, args) = parser.parse_args()
   
     config = configparser.ConfigParser()
@@ -217,16 +259,32 @@ if __name__ == "__main__":
     wv_path   = config['paths']['word_vectors_path']
 
     print("running model: %s" % options.model)
-    train_CNN_rationales_model(data_path, wv_path, model_name=options.model, 
-                                nb_epoch_sentences=options.sentence_nb_epochs,
-                                nb_epoch_doc=options.document_nb_epochs,
-                                sentence_dropout=options.dropout_sentence, 
-                                document_dropout=options.dropout_document,
-                                run_name=options.run_name,
-                                test_mode=options.test_mode,
-                                val_split=options.val_split,
-                                shuffle_data=options.shuffle_data,
-                                max_sent_len=options.max_sent_len,
-                                max_doc_len=options.max_doc_len,
-                                max_features=options.max_features,
-                                end_to_end_train=options.end_to_end_train)
+
+    if not options.line_search_sent_dropout:
+        train_CNN_rationales_model(data_path, wv_path, model_name=options.model, 
+                                    nb_epoch_sentences=options.sentence_nb_epochs,
+                                    nb_epoch_doc=options.document_nb_epochs,
+                                    sentence_dropout=options.dropout_sentence, 
+                                    document_dropout=options.dropout_document,
+                                    run_name=options.run_name,
+                                    test_mode=options.test_mode,
+                                    val_split=options.val_split,
+                                    shuffle_data=options.shuffle_data,
+                                    max_sent_len=options.max_sent_len,
+                                    max_doc_len=options.max_doc_len,
+                                    max_features=options.max_features,
+                                    end_to_end_train=options.end_to_end_train)
+    else:
+        print("line searching!")
+        line_search_train(data_path, wv_path, model_name=options.model, 
+                                    nb_epoch_sentences=options.sentence_nb_epochs,
+                                    nb_epoch_doc=options.document_nb_epochs,
+                                    document_dropout=options.dropout_document,
+                                    run_name=options.run_name,
+                                    test_mode=options.test_mode,
+                                    val_split=options.val_split,
+                                    shuffle_data=options.shuffle_data,
+                                    max_sent_len=options.max_sent_len,
+                                    max_doc_len=options.max_doc_len,
+                                    max_features=options.max_features,
+                                    end_to_end_train=options.end_to_end_train)
