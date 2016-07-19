@@ -86,9 +86,9 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
                                 max_sent_len=25, max_doc_len=200,
                                 end_to_end_train=False):
     '''
-    Note: at the moment this is using *all* training data; obviously need to set 
+    NOTE: at the moment this is using *all* training data; obviously need to set 
     aside the actual test fold (as we did for the paper experiments in Theano
-    implementation).
+    implementation). 
     '''
 
     # read in the docs just once. 
@@ -96,8 +96,11 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
     if shuffle_data: 
         random.shuffle(documents)
 
+    best_so_far = -np.inf
+    sent_dropout_star = None
     for sent_dropout in np.linspace(sent_dropout_range[0], sent_dropout_range[1], num_steps):
-        train_CNN_rationales_model(data_path, wvs_path, documents=documents, 
+        r_CNN, documents, p, X_doc, np.array(y_doc), best_performance = \
+            train_CNN_rationales_model(data_path, wvs_path, documents=documents, 
                                 test_mode=test_mode, 
                                 model_name=model_name, 
                                 nb_epoch_sentences=nb_epoch_sentences, 
@@ -110,6 +113,14 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
                                 max_sent_len=max_sent_len, 
                                 max_doc_len=max_doc_len,
                                 end_to_end_train=end_to_end_train)
+       
+        print("\n\nbest observed validation performance with sent_dropout_rate: %s was: %s" % (
+                    sent_dropout, best_performance))
+        if best_performance > best_so_far:
+            best_so_far = best_performance
+            sent_dropout_star = sent_dropout_rate
+
+    print ("best dropout: %s" % sent_dropout_star)
 
 def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=False, 
                                 model_name="rationale-CNN", 
@@ -175,7 +186,8 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     with open("%s_model.json" % model_name, 'w') as outf:
         outf.write(json_string)
 
-    checkpointer = ModelCheckpoint(filepath="%s_%s.hdf5" % (model_name, run_name), 
+    doc_weights_path = "%s_%s.hdf5" % (model_name, run_name)
+    checkpointer = ModelCheckpoint(filepath=doc_weights_path, 
                                     verbose=1,
                                     monitor="val_acc",
                                     save_best_only=True)
@@ -184,8 +196,12 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
                         validation_split=val_split,
                         callbacks=[checkpointer])
 
-    import pdb; pdb.set_trace()
-    return r_CNN, documents, p, X_doc, np.array(y_doc)
+    best_performance = np.max(hist.history['val_acc'])
+
+    # load best weights back in
+    r_CNN.doc_model.load_weights(doc_weights_path)
+
+    return r_CNN, documents, p, X_doc, np.array(y_doc), best_performance
 
 
 
