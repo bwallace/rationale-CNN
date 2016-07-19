@@ -23,15 +23,17 @@ You will need to create a simple config.ini file, which points to your data. In 
 
 The embeddings should contain the pre-trained word vectors to use for initialization (these will be tuned).
 
-# Running on the `movies` dataset
+# running on the `movies` dataset
 
-As an example, we distribute the *movies* dataset, which is from Zaidan's original work on [rationales](http://www.cs.jhu.edu/~ozaidan/rationales/). To run this, create a movies_config.ini file, with the above two entries. The word
+As an example, we distribute the *movies* dataset, which is from Zaidan's original work on [rationales](http://www.cs.jhu.edu/~ozaidan/rationales/). To run this, create a movies_config.ini file, with the above two entries. We suggest using the standard [Google news trained word2vec embeddings](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&ved=0ahUKEwjD2fGy2f_NAhXs54MKHRdcD9EQFggcMAA&url=https%3A%2F%2Fdrive.google.com%2Ffile%2Fd%2F0B7XkCwpI5KDYNlNUTTlSS21pQmM%2F&usg=AFQjCNF9AQjAMpwC_OiLOOrdEvZC2Y3NSw&sig2=7mcbKV9x-ApwMB8IWwym9Q&bvm=bv.127521224,d.amc).
 
 `THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python train_RA_CNN.py --inifile=/home/ubuntu/rationale-CNN/movies_config.ini --dropout-sentence=0.5 --sentence-epochs=10 --document-epochs=200  --dropout-document=0.25 --name=movies --max-doc-length=40 --max-sent-length=15 --shuffle`
 
+Obviously, the inifile path needs to be changed accordingly. For explanations regarding all possible arguments, use:
 
+`python train_RA_CNN.py -h`
 
-# Acknowledgements & more info
+# acknowledgements & more info
 
 This work is part of the [RobotReviewer](https://robot-reviewer.vortext.systems/) project, and is generously supported by the National Institutes of Health (under the National Library of Medicine), grant R01-LM012086-01A1. 
 
