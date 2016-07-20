@@ -2,7 +2,6 @@ from __future__ import print_function
 import math
 import csv
 import random 
-random.seed(1337) # for reproducibility
 import sys
 csv.field_size_limit(sys.maxsize)
 import os 
