@@ -44,6 +44,7 @@ from keras.layers.convolutional import Convolution1D, Convolution2D, MaxPooling1
 from keras.utils.np_utils import accuracy
 from keras.preprocessing.text import text_to_word_sequence, Tokenizer
 from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.constraints import maxnorm
 
 class RationaleCNN:
 
