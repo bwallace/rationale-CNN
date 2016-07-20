@@ -176,7 +176,7 @@ class RationaleCNN:
 
 
     def build_RA_CNN_model(self):
-        assert self.sentence_model_trained
+        assert(self.sentence_model_trained)
 
         # input dim is (max_doc_len x max_sent_len) -- eliding the batch size
         tokens_input = Input(name='input', 
@@ -255,7 +255,6 @@ class RationaleCNN:
 
         # note that using the sent_preds directly works as expected...
         sent_preds = TimeDistributed(sent_pred_model, name="sentence_predictions")(sent_vectors)
-        
 
         sw_layer = Lambda(lambda x: K.max(x[:,0:2], axis=1), output_shape=(1,)) 
         sent_weights = TimeDistributed(sw_layer, name="sentence_weights")(sent_preds)
@@ -288,16 +287,9 @@ class RationaleCNN:
         doc_output = Dense(1, activation="sigmoid", name="doc_prediction")(doc_vector)
         
         # ... and compile
-        '''
         self.doc_model = Model(input=tokens_input, output=doc_output)
         self.doc_model.compile(metrics=["accuracy"], loss="binary_crossentropy", optimizer="adadelta")
         print("rationale CNN model: ")
-        print(self.doc_model.summary())
-        '''
-        self.doc_model = Model(input=[tokens_input, tokens_input], output=[doc_output, sent_pred_model])
-        self.doc_model.compile(metrics=["accuracy", "accuracy"], 
-                                loss=["binary_crossentropy", "categorical_crossentropy"], 
-                                optimizer="adadelta")
         print(self.doc_model.summary())
 
     def build_sentence_model(self):
@@ -370,7 +362,7 @@ class RationaleCNN:
         
         if downsample:
             X, y = RationaleCNN.balanced_sample(X, y)
-            #X_validation, y_validation =  RationaleCNN.balanced_sample(X_validation, y_validation)
+            X_validation, y_validation =  RationaleCNN.balanced_sample(X_validation, y_validation)
 
         checkpointer = ModelCheckpoint(filepath=sentence_model_weights_path, 
                                        verbose=1, 

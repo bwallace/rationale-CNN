@@ -150,7 +150,8 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     for d in documents: 
         d.generate_sequences(p)
 
-    r_CNN = rationale_CNN.RationaleCNN(p, filters=[3,4,5], n_filters=20, 
+    r_CNN = rationale_CNN.RationaleCNN(p, filters=[3,4,5], 
+                                        n_filters=20, 
                                         sent_dropout=sentence_dropout, 
                                         doc_dropout=document_dropout,
                                         end_to_end_train=end_to_end_train)
@@ -165,6 +166,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
                                     sent_val_split=val_split)
         print("done.")
 
+
     ###################################
     # 2. build & train document model #
     ###################################
@@ -175,13 +177,16 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
         r_CNN.build_RA_CNN_model()
 
     X_doc, y_doc = [], []
+    y_sent = []
     for d in documents:
         X_doc.append(d.get_padded_sequences(p))
         y_doc.append(d.doc_y)
+        y_sent.append(d.sentences_y)
 
     X_doc = np.array(X_doc)
     y_doc = np.array(y_doc)
     
+
     # write out model architecture
     json_string = r_CNN.doc_model.to_json() 
     with open("%s_model.json" % model_name, 'w') as outf:
@@ -192,6 +197,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
                                     verbose=1,
                                     monitor="val_acc",
                                     save_best_only=True)
+
 
     hist = r_CNN.doc_model.fit(X_doc, y_doc, nb_epoch=nb_epoch_doc, 
                         validation_split=val_split,
