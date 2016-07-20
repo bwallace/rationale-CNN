@@ -79,7 +79,7 @@ def read_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-Xy-w-
 
 def line_search_train(data_path, wvs_path, documents=None, test_mode=False, 
                                 model_name="rationale-CNN", 
-                                nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.2,
+                                nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.1,
                                 sent_dropout_range=(0,.9), num_steps=10,
                                 document_dropout=0.5, run_name="RSG",
                                 shuffle_data=False, max_features=20000, 
@@ -124,7 +124,7 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
 
 def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=False, 
                                 model_name="rationale-CNN", 
-                                nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.2,
+                                nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.1,
                                 sentence_dropout=0.5, document_dropout=0.5, run_name="RSG",
                                 shuffle_data=False, max_features=20000, 
                                 max_sent_len=25, max_doc_len=200,
@@ -234,7 +234,7 @@ if __name__ == "__main__":
         help="document-level dropout", 
         default=0.5, type="float")
 
-    parser.add_option('--val', '--val_split', dest="val_split",
+    parser.add_option('--val', '--val-split', dest="val_split",
         help="percent of data to hold out for validation", 
         default=0.2, type="float")
 
