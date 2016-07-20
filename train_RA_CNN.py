@@ -161,7 +161,8 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     if model_name == "rationale-CNN":
         print("fitting sentence model...")
         r_CNN.build_sentence_model()
-        r_CNN.train_sentence_model(documents, nb_epoch=nb_epoch_sentences)
+        r_CNN.train_sentence_model(documents, nb_epoch=nb_epoch_sentences, 
+                                    sent_val_split=val_split)
         print("done.")
 
     ###################################
