@@ -166,8 +166,7 @@ class RationaleCNN:
                                 name="document_vector")(sent_vectors)
 
         doc_vector = Dropout(self.doc_dropout, name="doc_v_dropout")(doc_vector)
-        output = Dense(1, activation="sigmoid", name="doc_prediction", 
-                            W_constraint=max_norm(9))(doc_vector)
+        output = Dense(1, activation="sigmoid", name="doc_prediction")(doc_vector)
 
         self.doc_model = Model(input=tokens_input, output=output)
 
