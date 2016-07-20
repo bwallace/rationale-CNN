@@ -333,29 +333,44 @@ class RationaleCNN:
         return self.sentence_model 
 
 
-    def train_sentence_model(self, train_documents, nb_epoch=5, downsample=True, sent_val_split=.2, 
+    def train_sentence_model(self, train_documents, nb_epoch=5, downsample=True, 
+                                sent_val_split=.2, 
                                 sentence_model_weights_path="sentence_model_weights.hdf5"):
         # assumes sentence sequences have been generated!
         assert(train_documents[0].sentence_sequences is not None)
 
+        # for the validation split, we assume this is at the *document*
+        # level to be consistent with document-level training. 
+        # so if this is .1, for example, the sentences comprising the last 
+        # 10% of the documents will be used for validation
+        validation_size = int(sent_val_split*len(train_documents))
+        print("using sentences from %s docs for sentence prediction validation!" % 
+                    validation_size)
+
         X, y= [], []
         # flatten sentences/sentence labels
-        for d in train_documents:
+        for d in train_documents[:-validation_size]:
             X.extend(d.sentence_sequences)
             y.extend(d.sentences_y)
-
-        X, y = np.asarray(X), np.asarray(y)
+        X, y  = np.asarray(X), np.asarray(y)
+            
+        X_val, y_val = [], []
+        for d in train_documents[-validation_size:]:
+            X_validation.extend(d.sentence_sequences)
+            y_validation.extend(d.sentences_y)
+        X_validation, y_validation = np.asarray(X_validation), np.asarray(y_validation)
+        
         if downsample:
             X, y = RationaleCNN.balanced_sample(X, y)
+            X_validation, y_validation =  RationaleCNN.balanced_sample(X_validation, y_validation)
 
-        
         checkpointer = ModelCheckpoint(filepath=sentence_model_weights_path, 
                                        verbose=1, 
                                        save_best_only=True)
    
         self.sentence_model.fit(X, y, nb_epoch=nb_epoch, 
                                     callbacks=[checkpointer],
-                                    validation_split=sent_val_split)
+                                    validation_data=(X_validation, y_validation))
 
         # reload best weights
         self.sentence_model.load_weights(sentence_model_weights_path)
