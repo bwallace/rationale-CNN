@@ -98,7 +98,7 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
 
     best_so_far = -np.inf
     sent_dropout_star = None
-    for sent_dropout in np.linspace(sent_dropout_range[0], sent_dropout_range[1], num_steps, dtype='float32'):
+    for sent_dropout in np.linspace(sent_dropout_range[0], sent_dropout_range[1], num_steps):
         r_CNN, documents, p, X_doc, y_doc, best_performance = \
             train_CNN_rationales_model(data_path, wvs_path, documents=documents, 
                                 test_mode=test_mode, 
@@ -106,7 +106,7 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
                                 nb_epoch_sentences=nb_epoch_sentences, 
                                 nb_epoch_doc=nb_epoch_doc, 
                                 val_split=val_split,
-                                sentence_dropout=sent_dropout, 
+                                sentence_dropout=float(sent_dropout),
                                 document_dropout=document_dropout, 
                                 run_name=run_name,
                                 max_features=max_features, 
@@ -120,7 +120,7 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
             best_so_far = best_performance
             sent_dropout_star = sent_dropout
 
-    print ("best dropout: %s" % sent_dropout_star)
+    print ("best dropout: %s; best performance: %s" % (sent_dropout_star, best_so_far))
 
 def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=False, 
                                 model_name="rationale-CNN", 
@@ -128,6 +128,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
                                 sentence_dropout=0.5, document_dropout=0.5, run_name="RSG",
                                 shuffle_data=False, max_features=20000, 
                                 max_sent_len=25, max_doc_len=200,
+                                batch_size=50,
                                 end_to_end_train=False):
     
     if documents is None:
@@ -194,7 +195,8 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
 
     hist = r_CNN.doc_model.fit(X_doc, y_doc, nb_epoch=nb_epoch_doc, 
                         validation_split=val_split,
-                        callbacks=[checkpointer])
+                        callbacks=[checkpointer]
+                        batch_size=batch_size)
 
     best_performance = np.max(hist.history['val_acc'])
 
