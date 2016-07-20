@@ -320,7 +320,8 @@ class RationaleCNN:
             convolutions.append(flattened)
 
         sentence_vector = merge(convolutions, name="sentence_vector", mode="concat") # hang on to this layer!
-        output = Dense(3, activation="softmax", name="sentence_prediction")(sentence_vector)
+        output = Dense(3, activation="softmax", name="sentence_prediction", 
+                                W_constraint=maxnorm(9))(sentence_vector)
 
         self.sentence_model = Model(input=tokens_input, output=output)
         print("model built")
