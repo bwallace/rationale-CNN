@@ -47,7 +47,7 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping
 
 class RationaleCNN:
 
-    def __init__(self, preprocessor, filters=None, n_filters=32, 
+    def __init__(self, preprocessor, filters=None, n_filters=20,#32, 
                         sent_dropout=0.5, doc_dropout=0.5, 
                         end_to_end_train=False):
         '''
