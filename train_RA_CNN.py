@@ -201,8 +201,8 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
 
     hist = r_CNN.doc_model.fit(X_doc, y_doc, nb_epoch=nb_epoch_doc, 
                         validation_split=val_split,
-                        callbacks=[checkpointer],
-                        batch_size=batch_size)
+                        callbacks=[checkpointer])#,
+                        #batch_size=batch_size)
 
     best_performance = np.max(hist.history['val_acc'])
 
