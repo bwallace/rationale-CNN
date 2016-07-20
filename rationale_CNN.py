@@ -354,7 +354,7 @@ class RationaleCNN:
             y.extend(d.sentences_y)
         X, y  = np.asarray(X), np.asarray(y)
             
-        X_val, y_val = [], []
+        X_validation, y_validation = [], []
         for d in train_documents[-validation_size:]:
             X_validation.extend(d.sentence_sequences)
             y_validation.extend(d.sentences_y)
