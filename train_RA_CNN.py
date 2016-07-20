@@ -151,7 +151,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     for d in documents: 
         d.generate_sequences(p)
 
-    r_CNN = rationale_CNN.RationaleCNN(p, filters=[3,4,5], n_filters=32, 
+    r_CNN = rationale_CNN.RationaleCNN(p, filters=[3,4,5], n_filters=20, 
                                         sent_dropout=sentence_dropout, 
                                         doc_dropout=document_dropout,
                                         end_to_end_train=end_to_end_train)
