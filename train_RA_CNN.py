@@ -2,6 +2,7 @@ from __future__ import print_function
 import math
 import csv
 import random 
+import pickle
 import sys
 csv.field_size_limit(sys.maxsize)
 import os 
@@ -79,7 +80,7 @@ def read_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-Xy-w-
 def line_search_train(data_path, wvs_path, documents=None, test_mode=False, 
                                 model_name="rationale-CNN", 
                                 nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.1,
-                                sent_dropout_range=(0,.9), num_steps=10,
+                                sent_dropout_range=(0,.9), num_steps=20,
                                 document_dropout=0.5, run_name="RSG",
                                 shuffle_data=False, max_features=20000, 
                                 max_sent_len=25, max_doc_len=200,
@@ -95,6 +96,7 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
     if shuffle_data: 
         random.shuffle(documents)
 
+    perf_d = {}
     best_so_far = -np.inf
     sent_dropout_star = None
     for sent_dropout in np.linspace(sent_dropout_range[0], sent_dropout_range[1], num_steps):
@@ -112,7 +114,9 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
                                 max_sent_len=max_sent_len, 
                                 max_doc_len=max_doc_len,
                                 end_to_end_train=end_to_end_train)
-       
+        
+        perf_d[sent_dropout] = best_performance
+
         print("\n\nbest observed validation performance with sent_dropout_rate: %s was: %s" % (
                     sent_dropout, best_performance))
         if best_performance > best_so_far:
@@ -120,6 +124,16 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
             sent_dropout_star = sent_dropout
 
     print ("best dropout: %s; best performance: %s" % (sent_dropout_star, best_so_far))
+
+    print("perf-d!")
+    print(perf_d)
+
+
+    with open("perf-d.pickle", "w") as outf:
+        pickle.dump(perf_d, outf)
+
+
+
 
 def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=False, 
                                 model_name="rationale-CNN", 
@@ -151,7 +165,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
         d.generate_sequences(p)
 
     r_CNN = rationale_CNN.RationaleCNN(p, filters=[3,4,5], 
-                                        n_filters=20, 
+                                        n_filters=32, 
                                         sent_dropout=sentence_dropout, 
                                         doc_dropout=document_dropout,
                                         end_to_end_train=end_to_end_train)
