@@ -305,8 +305,7 @@ class RationaleCNN:
                       input_length=self.preprocessor.max_sent_len, 
                       weights=self.preprocessor.init_vectors)(tokens_input)
         
-        #x = Dropout(self.sent_dropout)(x) # @TODO; parameterize! 
-
+ 
         convolutions = []
         for n_gram in self.ngram_filters:
             cur_conv = Convolution1D(name="conv_" + str(n_gram), 
@@ -325,8 +324,8 @@ class RationaleCNN:
         sentence_vector = merge(convolutions, name="sentence_vector", mode="concat")
         sentence_vector = Dropout(self.sent_dropout, name="dropout")(sentence_vector)
 
-        output = Dense(3, activation="softmax", name="sentence_prediction")(sentence_vector)
-                                #W_constraint=maxnorm(9))(sentence_vector)
+        output = Dense(3, activation="softmax", name="sentence_prediction",
+                                W_constraint=maxnorm(9))(sentence_vector)
         
         #output = Dropout(self.sent_dropout, name="dropout")(output)
 
