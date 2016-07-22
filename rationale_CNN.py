@@ -145,7 +145,7 @@ class RationaleCNN:
 
 
         sent_vectors = merge(convolutions, name="sentence_vectors", mode="concat")
-        #sent_vectors = Dropout(self.sent_dropout, name="dropout")(sent_vectors)
+        sent_vectors = Dropout(self.sent_dropout, name="dropout")(sent_vectors)
 
         '''
         For this model, we simply take an unweighted sum of the sentence vectors
@@ -242,7 +242,7 @@ class RationaleCNN:
 
 
         sent_vectors = merge(convolutions, name="sentence_vectors", mode="concat")
-        #sent_vectors = Dropout(self.sent_dropout, name="dropout")(sent_vectors)
+        sent_vectors = Dropout(self.sent_dropout, name="dropout")(sent_vectors)
 
         # now we take a weighted sum of the sentence vectors to induce a document representation
         sent_sm_weights, sm_biases = self.sentence_model.get_layer("sentence_prediction").get_weights()
@@ -251,7 +251,6 @@ class RationaleCNN:
         sent_pred_model = Dense(3, activation="softmax", name="sentence_prediction", 
                                     weights=[sent_sm_weights, sm_biases], 
                                     trainable=self.end_to_end_train)
-        sent_pred_model = Dropout(self.sent_dropout, name="sent_dropout")(sent_pred_model)
 
         # note that using the sent_preds directly works as expected...
         sent_preds = TimeDistributed(sent_pred_model, name="sentence_predictions")(sent_vectors)
@@ -323,9 +322,12 @@ class RationaleCNN:
             convolutions.append(flattened)
 
         sentence_vector = merge(convolutions, name="sentence_vector", mode="concat")
+        sentence_vector = Dropout(self.sent_dropout, name="dropout")(sentence_vector)
+
         output = Dense(3, activation="softmax", name="sentence_prediction")(sentence_vector)
                                 #W_constraint=maxnorm(9))(sentence_vector)
-        output = Dropout(self.sent_dropout, name="dropout")(output)
+        
+        #output = Dropout(self.sent_dropout, name="dropout")(output)
 
         self.sentence_model = Model(input=tokens_input, output=output)
         print("model built")
