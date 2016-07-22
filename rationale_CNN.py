@@ -242,7 +242,7 @@ class RationaleCNN:
 
 
         sent_vectors = merge(convolutions, name="sentence_vectors", mode="concat")
-        sent_vectors = Dropout(self.sent_dropout, name="dropout")(sent_vectors)
+        #sent_vectors = Dropout(self.sent_dropout, name="dropout")(sent_vectors)
 
         # now we take a weighted sum of the sentence vectors to induce a document representation
         sent_sm_weights, sm_biases = self.sentence_model.get_layer("sentence_prediction").get_weights()
@@ -251,7 +251,7 @@ class RationaleCNN:
         sent_pred_model = Dense(3, activation="softmax", name="sentence_prediction", 
                                     weights=[sent_sm_weights, sm_biases], 
                                     trainable=self.end_to_end_train)
-
+        sent_pred_model = Dropout(self.sent_dropout, name="dropout")(sent_pred_model)
 
         # note that using the sent_preds directly works as expected...
         sent_preds = TimeDistributed(sent_pred_model, name="sentence_predictions")(sent_vectors)
@@ -282,15 +282,17 @@ class RationaleCNN:
 
         # trim extra dim
         doc_vector = Reshape((total_sentence_dims,), name="reshaped_doc")(doc_vector)
-        doc_vector = Dropout(self.doc_dropout, name="doc_v_dropout")(doc_vector)
+        #doc_vector = Dropout(self.doc_dropout, name="doc_v_dropout")(doc_vector)
 
         doc_output = Dense(1, activation="sigmoid", name="doc_prediction")(doc_vector)
+        doc_output = Dropout(self.doc_dropout, name="doc_v_dropout")(doc_output)
         
         # ... and compile
         self.doc_model = Model(input=tokens_input, output=doc_output)
         self.doc_model.compile(metrics=["accuracy"], loss="binary_crossentropy", optimizer="adadelta")
         print("rationale CNN model: ")
         print(self.doc_model.summary())
+
 
     def build_sentence_model(self):
         ''' 
@@ -303,7 +305,7 @@ class RationaleCNN:
                       input_length=self.preprocessor.max_sent_len, 
                       weights=self.preprocessor.init_vectors)(tokens_input)
         
-        x = Dropout(self.sent_dropout)(x) # @TODO; parameterize! 
+        #x = Dropout(self.sent_dropout)(x) # @TODO; parameterize! 
 
         convolutions = []
         for n_gram in self.ngram_filters:
@@ -323,6 +325,7 @@ class RationaleCNN:
         sentence_vector = merge(convolutions, name="sentence_vector", mode="concat")
         output = Dense(3, activation="softmax", name="sentence_prediction")(sentence_vector)
                                 #W_constraint=maxnorm(9))(sentence_vector)
+        output = Dropout(self.sent_dropout)(output)
 
         self.sentence_model = Model(input=tokens_input, output=output)
         print("model built")
