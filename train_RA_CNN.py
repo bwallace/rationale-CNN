@@ -82,7 +82,7 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
                                 nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.1,
                                 sent_dropout_range=(0,.9), num_steps=20,
                                 document_dropout=0.5, run_name="RSG",
-                                shuffle_data=False, max_features=20000, 
+                                shuffle_data=False, n_filters=32, max_features=20000, 
                                 max_sent_len=25, max_doc_len=200,
                                 end_to_end_train=False):
     '''
@@ -110,6 +110,7 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
                                 sentence_dropout=float(sent_dropout),
                                 document_dropout=document_dropout, 
                                 run_name=run_name,
+                                shuffle_data=shuffle_data,
                                 max_features=max_features, 
                                 max_sent_len=max_sent_len, 
                                 max_doc_len=max_doc_len,
@@ -141,6 +142,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
                                 sentence_dropout=0.5, document_dropout=0.5, run_name="RSG",
                                 shuffle_data=False, max_features=20000, 
                                 max_sent_len=25, max_doc_len=200,
+                                n_filters=32,
                                 batch_size=50,
                                 end_to_end_train=False):
     
@@ -165,7 +167,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
         d.generate_sequences(p)
 
     r_CNN = rationale_CNN.RationaleCNN(p, filters=[3,4,5], 
-                                        n_filters=32, 
+                                        n_filters=n_filters, 
                                         sent_dropout=sentence_dropout, 
                                         doc_dropout=document_dropout,
                                         end_to_end_train=end_to_end_train)
@@ -280,6 +282,10 @@ if __name__ == "__main__":
         help="maximum number of unique tokens", 
         default=20000, type="int")
 
+    parser.add_option('--nf', '--num-filters', dest="n_filters",
+        help="number of filters (per n-gram)", 
+        default=32, type="int")
+
     parser.add_option('--tr', '--end-to-end-train', dest="end_to_end_train",
         help="continue training sentence softmax parameters?", 
         action='store_true', default=False)
@@ -308,6 +314,7 @@ if __name__ == "__main__":
                                     test_mode=options.test_mode,
                                     val_split=options.val_split,
                                     shuffle_data=options.shuffle_data,
+                                    n_filters=options.n_filters,
                                     max_sent_len=options.max_sent_len,
                                     max_doc_len=options.max_doc_len,
                                     max_features=options.max_features,
@@ -322,6 +329,7 @@ if __name__ == "__main__":
                                     test_mode=options.test_mode,
                                     val_split=options.val_split,
                                     shuffle_data=options.shuffle_data,
+                                    n_filters=options.n_filters,
                                     max_sent_len=options.max_sent_len,
                                     max_doc_len=options.max_doc_len,
                                     max_features=options.max_features,

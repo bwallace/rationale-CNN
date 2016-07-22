@@ -257,6 +257,7 @@ class RationaleCNN:
         sent_preds = TimeDistributed(sent_pred_model, name="sentence_predictions")(sent_vectors)
 
         sw_layer = Lambda(lambda x: K.max(x[:,0:2], axis=1), output_shape=(1,)) 
+        # should really explicitly zero out sentences that were padded...
         sent_weights = TimeDistributed(sw_layer, name="sentence_weights")(sent_preds)
  
         def scale_merge(inputs):
