@@ -242,6 +242,7 @@ class RationaleCNN:
 
 
         sent_vectors = merge(convolutions, name="sentence_vectors", mode="concat")
+        # it's not clear that it even makes sense to apply drop out here!
         sent_vectors = Dropout(self.sent_dropout, name="dropout")(sent_vectors)
 
         # now we take a weighted sum of the sentence vectors to induce a document representation
@@ -281,10 +282,10 @@ class RationaleCNN:
 
         # trim extra dim
         doc_vector = Reshape((total_sentence_dims,), name="reshaped_doc")(doc_vector)
-        #doc_vector = Dropout(self.doc_dropout, name="doc_v_dropout")(doc_vector)
+        doc_vector = Dropout(self.doc_dropout, name="doc_v_dropout")(doc_vector)
 
         doc_output = Dense(1, activation="sigmoid", name="doc_prediction")(doc_vector)
-        doc_output = Dropout(self.doc_dropout, name="doc_v_dropout")(doc_output)
+        
         
         # ... and compile
         self.doc_model = Model(input=tokens_input, output=doc_output)
