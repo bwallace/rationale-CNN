@@ -257,6 +257,7 @@ class RationaleCNN:
         sent_preds = TimeDistributed(sent_pred_model, name="sentence_predictions")(sent_vectors)
 
         sw_layer = Lambda(lambda x: K.max(x[:,0:2], axis=1), output_shape=(1,)) 
+        
         # should really explicitly zero out sentences that were padded...
         sent_weights = TimeDistributed(sw_layer, name="sentence_weights")(sent_preds)
  
@@ -365,18 +366,39 @@ class RationaleCNN:
             X_validation.extend(d.sentence_sequences)
             y_validation.extend(d.sentences_y)
         X_validation, y_validation = np.asarray(X_validation), np.asarray(y_validation)
+        # for now
         
         if downsample:
-            X, y = RationaleCNN.balanced_sample(X, y)
             X_validation, y_validation =  RationaleCNN.balanced_sample(X_validation, y_validation)
 
-        checkpointer = ModelCheckpoint(filepath=sentence_model_weights_path, 
-                                       verbose=1, 
-                                       save_best_only=True)
-   
-        self.sentence_model.fit(X, y, nb_epoch=nb_epoch, 
-                                    callbacks=[checkpointer],
-                                    validation_data=(X_validation, y_validation))
+            cur_loss, best_loss = None, np.inf 
+
+            # then draw nb_epoch balanced samples; take one pass on each
+            for iter_ in range(nb_epoch):
+
+                print ("on epoch: %s" % iter_)
+                X_tmp, y_tmp = RationaleCNN.balanced_sample(X, y)
+
+                self.sentence_model.fit(X_tmp, y_tmp, nb_epoch=1)
+
+                # metrics are loss and acc.
+                cur_loss = self.sentence_model.evaluate(X_validation, y_validation)[0]
+                #print ("metrics? %s" % self.sentence_model.metrics_names)
+                print ("cur loss: %s" % cur_loss)
+                if cur_loss < best_loss:
+                    best_loss = cur_loss
+                    self.sentence_model.save_weights(sentence_model_weights_path, overwrite=True)
+                    print ("new best loss! %s" % best_loss)
+
+
+        else:
+            checkpointer = ModelCheckpoint(filepath=sentence_model_weights_path, 
+                                           verbose=1, 
+                                           save_best_only=True)
+       
+            self.sentence_model.fit(X, y, nb_epoch=nb_epoch, 
+                                        callbacks=[checkpointer],
+                                        validation_data=(X_validation, y_validation))
 
         # reload best weights
         self.sentence_model.load_weights(sentence_model_weights_path)
