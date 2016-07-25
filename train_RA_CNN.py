@@ -286,6 +286,10 @@ if __name__ == "__main__":
         help="number of filters (per n-gram)", 
         default=32, type="int")
 
+    parser.add_option('--bs', '--batch-size', dest="batch_size",
+        help="batch size", 
+        default=50, type="int")
+
     parser.add_option('--tr', '--end-to-end-train', dest="end_to_end_train",
         help="continue training sentence softmax parameters?", 
         action='store_true', default=False)
@@ -315,6 +319,7 @@ if __name__ == "__main__":
                                     val_split=options.val_split,
                                     shuffle_data=options.shuffle_data,
                                     n_filters=options.n_filters,
+                                    batch_size=options.batch_size,
                                     max_sent_len=options.max_sent_len,
                                     max_doc_len=options.max_doc_len,
                                     max_features=options.max_features,
