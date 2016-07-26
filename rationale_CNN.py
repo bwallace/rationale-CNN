@@ -500,7 +500,7 @@ class Preprocessor:
         '''
 
         self.max_features = max_features  
-        self.tokenizer = Tokenizer(nb_words=self.max_features)
+        self.tokenizer = Tokenizer(nb_words=self.max_features, lower=False)
         self.max_sent_len = max_sent_len  # the max sentence length! @TODO rename; this is confusing. 
         self.max_doc_len = max_doc_len # w.r.t. number of sentences!
 
@@ -529,7 +529,7 @@ class Preprocessor:
 
     def fit_tokenizer(self):
         ''' Fits tokenizer to all raw texts; remembers indices->words mappings. '''
-        self.tokenizer.fit_on_texts(self.raw_texts, nb_words=self.max_features)
+        self.tokenizer.fit_on_texts(self.raw_texts)
         self.word_indices_to_words = {}
         for token, idx in self.tokenizer.word_index.items():
             self.word_indices_to_words[idx] = token
