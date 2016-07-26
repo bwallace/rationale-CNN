@@ -529,7 +529,7 @@ class Preprocessor:
 
     def fit_tokenizer(self):
         ''' Fits tokenizer to all raw texts; remembers indices->words mappings. '''
-        self.tokenizer.fit_on_texts(self.raw_texts)
+        self.tokenizer.fit_on_texts(self.raw_texts, nb_words=self.max_features)
         self.word_indices_to_words = {}
         for token, idx in self.tokenizer.word_index.items():
             self.word_indices_to_words[idx] = token
