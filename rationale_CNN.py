@@ -437,18 +437,23 @@ class RationaleCNN:
 
 
 class Document:
-    def __init__(self, doc_id, sentences, doc_label=None, sentences_labels=None):
+    def __init__(self, doc_id, sentences, doc_label=None, sentences_labels=None, 
+                    min_sent_len=3):
         self.doc_id = doc_id
         self.doc_y = doc_label
 
-        self.sentences = sentences
+        self.sentences, self.sentences_y = [], []
+        for idx, s in enumerate(sentences):
+            #import pdb; pdb.set_trace()
+            if len(s.split(" ")) >= min_sent_len:
+                self.sentences.append(s)
+                self.sentences_y.append(sentence_labels[idx])
+
         self.sentence_sequences = None
         # length, pre-padding!
-        self.num_sentences = len(sentences)
+        self.num_sentences = len(self.sentences)
 
-        self.sentences_y = sentences_labels
         self.sentence_weights = None 
-
         self.sentence_idx = 0
         self.n = len(self.sentences)
 
