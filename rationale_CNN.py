@@ -113,7 +113,7 @@ class RationaleCNN:
         tokens_reshaped = Reshape([self.preprocessor.max_doc_len*self.preprocessor.max_sent_len])(tokens_input)
 
     
-        x = Embedding(self.preprocessor.max_features, self.preprocessor.embedding_dims, 
+        x = Embedding(self.preprocessor.max_features+1, self.preprocessor.embedding_dims, 
                         weights=self.preprocessor.init_vectors,
                         name="embedding")(tokens_reshaped)
 
@@ -188,7 +188,7 @@ class RationaleCNN:
         # embed the tokens; output will be (p.max_doc_len*p.max_sent_len x embedding_dims)
         # here we should initialize with weights from sentence model embedding layer!
         # also pass weights for initialization
-        x = Embedding(self.preprocessor.max_features, self.preprocessor.embedding_dims, 
+        x = Embedding(self.preprocessor.max_features+1, self.preprocessor.embedding_dims, 
                         weights=self.sentence_model.get_layer("embedding").get_weights(),
                         #weights=self.preprocessor.init_vectors, 
                         name="embedding")(tokens_reshaped)
@@ -302,7 +302,7 @@ class RationaleCNN:
         The task is to predict which sentences are pos/neg rationales.
         '''
         tokens_input = Input(name='input', shape=(self.preprocessor.max_sent_len,), dtype='int32')
-        x = Embedding(self.preprocessor.max_features, self.preprocessor.embedding_dims, 
+        x = Embedding(self.preprocessor.max_features+1, self.preprocessor.embedding_dims, 
                       name="embedding",
                       input_length=self.preprocessor.max_sent_len, 
                       weights=self.preprocessor.init_vectors)(tokens_input)
@@ -354,17 +354,26 @@ class RationaleCNN:
         print("using sentences from %s docs for sentence prediction validation!" % 
                     validation_size)
 
+
         X, y= [], []
         # flatten sentences/sentence labels
         for d in train_documents[:-validation_size]:
-            X.extend(d.sentence_sequences)
-            y.extend(d.sentences_y)
-        X, y  = np.asarray(X), np.asarray(y)
+            X_d, y_d = d.get_padded_sequences(self.preprocessor)
+            X.extend(X_d)
+            y.extend(y_d)
+            #X.extend(d.sentence_sequences)
+            #y.extend(d.sentences_y)
+
+        X, y = np.asarray(X), np.asarray(y)
             
         X_validation, y_validation = [], []
         for d in train_documents[-validation_size:]:
-            X_validation.extend(d.sentence_sequences)
-            y_validation.extend(d.sentences_y)
+            #X_validation.extend(d.sentence_sequences)
+            #y_validation.extend(d.sentences_y)
+            X_d, y_d = d.get_padded_sequences(self.preprocessor)
+            X_validation.extend(X_d)
+            y_validation.extend(y_d)
+
         X_validation, y_validation = np.asarray(X_validation), np.asarray(y_validation)
         # for now
         
@@ -411,8 +420,6 @@ class RationaleCNN:
 
         self.sentence_weights = []
         for d in documents:
-            #x_doc = d.get_padded_sequences(p)
-
             sent_probs = self.sentence_model.predict(d.sentence_sequences)
             weights = np.amax(sent_probs[:,0:2],axis=1)
             #weights = np.amax(sentence_predictions[:,0:2],axis=1)
@@ -455,23 +462,33 @@ class Document:
         elsewhere! this will be used to map sentences to 
         integer sequences here.
         '''
-
-        # here we build twice, which is supp
         self.sentence_sequences = p.build_sequences(self.sentences)
+
+    def get_padded_sequences_for_X_y(self, p, X, y):
+        n_sentences = X.shape[0]
+        if n_sentences > p.max_doc_len:
+            X = X[:p.max_doc_len]
+            y = y[:p.max_doc_len]
+        elif n_sentences < p.max_doc_len:
+            # pad
+            # @TODO I don'tt hink you should use zeros here?
+            #dummy_rows = np.zeros((p.max_doc_len-n_sentences, p.max_sent_len), dtype='int32')
+            dummy_rows = p.max_features * np.ones((p.max_doc_len-n_sentences, p.max_sent_len), dtype='int32') 
+            X = np.vstack((X, dummy_rows))
+        
+            dummy_lbls = [np.array([0,0,1]) for _ in range(p.max_doc_len-n_sentences)]
+            y = np.vstack((y, dummy_lbls))
+
+        return np.array(X), np.array(y)
 
     def get_padded_sequences(self, p):
         # return p.build_sequences(self.sentences, pad_documents=True)              
-        n_sentences = self.sentence_sequences.shape[0]
+        #n_sentences = self.sentence_sequences.shape[0]
         X = self.sentence_sequences
+        y = self.sentences_y
+        return self.get_padded_sequences_for_X_y(p, X, y)
 
-        if n_sentences > p.max_doc_len:
-            X = X[:p.max_doc_len]
-        elif n_sentences < p.max_doc_len:
-            # pad
-            dummy_rows = np.zeros((p.max_doc_len-n_sentences, p.max_sent_len), dtype='int32')
-            X = np.vstack((X, dummy_rows))
 
-        return np.array(X)
 
 class Preprocessor:
     def __init__(self, max_features, max_sent_len, embedding_dims=200, wvs=None, max_doc_len=500):
@@ -541,6 +558,9 @@ class Preprocessor:
                                                 self.embedding_dims)*-2 + 1
 
                     self.init_vectors.append(unknown_words_to_vecs[t])
+
+        # init padding token!
+        self.init_vectors.append(np.zeros(self.embedding_dims))
 
         # note that we make this a singleton list because that's
         # what Keras wants. 

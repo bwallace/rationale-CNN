@@ -195,9 +195,10 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     X_doc, y_doc = [], []
     y_sent = []
     for d in documents:
-        X_doc.append(d.get_padded_sequences(p))
+        cur_X, cur_sent_y = d.get_padded_sequences(p)
+        X_doc.append(cur_X)
         y_doc.append(d.doc_y)
-        y_sent.append(d.sentences_y)
+        y_sent.append(cur_sent_y)
 
     X_doc = np.array(X_doc)
     y_doc = np.array(y_doc)
