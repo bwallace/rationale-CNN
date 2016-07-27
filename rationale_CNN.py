@@ -444,10 +444,9 @@ class Document:
 
         self.sentences, self.sentences_y = [], []
         for idx, s in enumerate(sentences):
-            #import pdb; pdb.set_trace()
             if len(s.split(" ")) >= min_sent_len:
                 self.sentences.append(s)
-                self.sentences_y.append(sentence_labels[idx])
+                self.sentences_y.append(sentences_labels[idx])
 
         self.sentence_sequences = None
         # length, pre-padding!
