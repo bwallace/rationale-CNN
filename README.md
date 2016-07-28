@@ -29,7 +29,7 @@ As an example, we distribute the *movies* dataset, which is from Zaidan's origin
 
 `THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python train_RA_CNN.py --inifile=/path/to/movies_config.ini --sentence-epochs=15 --batch-size=50 --document-epochs=200 --dropout-document=0.5 --dropout-sentence=0.7 --name=movies --mf=25000 --max-doc-length=40 --max-sent-length=20 --shuffle --val-split=.1 --num-filters=20`
 
-Obviously, the inifile path needs to be changed accordingly. On most runs, this will eventually reach ~0.9 accuracy on the validation set. 
+Obviously, the inifile path needs to be changed accordingly. Note that in practice, one needs to tune the sentence dropout on the train set, because the model is rather sensitive to this hyper-parameter. 
 
 For explanations regarding all possible arguments, use:
 
