@@ -27,9 +27,11 @@ The embeddings should contain the pre-trained word vectors to use for initializa
 
 As an example, we distribute the *movies* dataset, which is from Zaidan's original work on [rationales](http://www.cs.jhu.edu/~ozaidan/rationales/). To run this, create a movies_config.ini file, with the above two entries. We suggest using the standard [Google news trained word2vec embeddings](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&ved=0ahUKEwjD2fGy2f_NAhXs54MKHRdcD9EQFggcMAA&url=https%3A%2F%2Fdrive.google.com%2Ffile%2Fd%2F0B7XkCwpI5KDYNlNUTTlSS21pQmM%2F&usg=AFQjCNF9AQjAMpwC_OiLOOrdEvZC2Y3NSw&sig2=7mcbKV9x-ApwMB8IWwym9Q&bvm=bv.127521224,d.amc).
 
-`THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python train_RA_CNN.py --inifile=/home/ubuntu/rationale-CNN/movies_config.ini --dropout-sentence=0.5 --sentence-epochs=10 --document-epochs=200  --dropout-document=0.25 --name=movies --max-doc-length=40 --max-sent-length=15 --shuffle`
+`THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python train_RA_CNN.py --inifile=/path/to/movies_config.ini --sentence-epochs=15 --batch-size=50 --document-epochs=200 --dropout-document=0.5 --dropout-sentence=0.7 --name=movies --mf=25000 --max-doc-length=40 --max-sent-length=20 --shuffle --val-split=.1 --num-filters=20`
 
-Obviously, the inifile path needs to be changed accordingly. For explanations regarding all possible arguments, use:
+Obviously, the inifile path needs to be changed accordingly. On most runs, this will eventually reach ~0.9 accuracy on the validation set. 
+
+For explanations regarding all possible arguments, use:
 
 `python train_RA_CNN.py -h`
 
