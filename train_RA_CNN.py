@@ -6,7 +6,7 @@ import pickle
 import sys
 csv.field_size_limit(sys.maxsize)
 import os 
-import configparser
+import ConfigParser
 import optparse 
 
 import sklearn 
@@ -301,11 +301,24 @@ if __name__ == "__main__":
 
     (options, args) = parser.parse_args()
   
-    config = configparser.ConfigParser()
+    config = ConfigParser.ConfigParser()
     print("reading config file: %s" % options.inifile)
     config.read(options.inifile)
-    data_path = config['paths']['data_path']
-    wv_path   = config['paths']['word_vectors_path']
+    def ConfigSectionMap(section):
+        dict1 = {}
+        options = config.options(section)
+        for option in options:
+            try:
+                dict1[option] = config.get(section, option)
+                #if dict1[option] == -1:
+                   # DebugPrint("skip: %s" % option)
+            except:
+                print("exception on %s!" % option)
+                dict1[option] = None
+        return dict1
+
+    data_path = ConfigSectionMap('paths')['data_path']
+    wv_path   = ConfigSectionMap('paths')['word_vectors_path']
 
     print("running model: %s" % options.model)
 
