@@ -37,7 +37,8 @@ def read_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-Xy-w-
 
     Note that we assume sentence_lbl \in {-1, 1}
     '''
-    df = pd.read_csv(path)
+    print ("data path: " + path)
+    df = pd.read_csv(str(path))
     # replace empty entries (which were formerly being converted to NaNs)
     # with ""
     df = df.replace(np.nan,' ', regex=True)
@@ -49,6 +50,7 @@ def read_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-Xy-w-
         doc_label = (doc["doc_lbl"].values[0]+1)/2 # convert to 0/1
 
         sentences = doc["sentence"].values
+        print (doc_id)
         sentence_labels = (doc["sentence_lbl"].values+1)/2
         
         # convert to binary output vectors, so that e.g., [1, 0, 0]
@@ -205,16 +207,15 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     
 
     # write out model architecture
-    json_string = r_CNN.doc_model.to_json() 
-    with open("%s_model.json" % model_name, 'w') as outf:
-        outf.write(json_string)
+    #json_string = r_CNN.doc_model.to_json()
+    #with open("%s_model.json" % model_name, 'w') as outf:
+     #   outf.write(json_string)
 
     doc_weights_path = "%s_%s.hdf5" % (model_name, run_name)
     checkpointer = ModelCheckpoint(filepath=doc_weights_path, 
                                     verbose=1,
                                     monitor="val_acc",
                                     save_best_only=True)
-
 
     hist = r_CNN.doc_model.fit(X_doc, y_doc, nb_epoch=nb_epoch_doc, 
                         validation_split=val_split,
@@ -297,7 +298,7 @@ if __name__ == "__main__":
 
     parser.add_option('--ls', '--line-search', dest="line_search_sent_dropout",
         help="line search over sentence dropout parameter?", 
-        action='store_true', default=False)
+        action='store_true', default=True)
 
     (options, args) = parser.parse_args()
   
@@ -318,6 +319,7 @@ if __name__ == "__main__":
         return dict1
 
     data_path = ConfigSectionMap('paths')['data_path']
+    print ("data path: " + data_path)
     wv_path   = ConfigSectionMap('paths')['word_vectors_path']
 
     print("running model: %s" % options.model)

@@ -198,7 +198,6 @@ class RationaleCNN:
         x = Reshape((1, self.preprocessor.max_doc_len, 
                      self.preprocessor.max_sent_len*self.preprocessor.embedding_dims), 
                      name="reshape")(x)
-
         
         total_sentence_dims = len(self.ngram_filters) * self.n_filters 
 
