@@ -1,7 +1,7 @@
 # rationale-CNN
 A [Keras](http://keras.io/) implementation of our CNNs with "rationales". Reference article: [https://arxiv.org/abs/1605.04469](https://arxiv.org/abs/1605.04469). Citation:
 
->Ye Zhang, Iain J. Marshall and Byron C. Wallace *Rationale-Augmented Convolutional Neural Networks for Text Classification*, [http://www.emnlp2016.net/](EMNLP, 2016).
+>Ye Zhang, Iain J. Marshall and Byron C. Wallace *Rationale-Augmented Convolutional Neural Networks for Text Classification*, [EMNLP, 2016](http://www.emnlp2016.net/).
 
 ![model schematic](https://raw.githubusercontent.com/bwallace/rationale-CNN/master/figures/rationale-CNN-figure.png)
 
