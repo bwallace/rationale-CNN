@@ -83,7 +83,7 @@ To make predictions for a new instance, first again create a Document instance, 
 pred, rationales = r_CNN.predict_and_rank_sentences_for_doc(new_doc, num_rationales=3)
 ```
 
-Here, pred will be a scalar and `rationales` a list of extracted snippets supporting this. 
+Here, `pred` will be a scalar and `rationales` a list of extracted snippets supporting this. 
 
 # acknowledgements & more info
 
