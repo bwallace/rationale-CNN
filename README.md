@@ -35,6 +35,30 @@ For explanations regarding all possible arguments, use:
 
 `python train_RA_CNN.py -h`
 
+## working with the modules directly
+
+In addition to the command line interface, you can of course instantiate the model directly (as in `train_RA_CNN.py`). To do this, you'll want to create a Preprocessor instance
+
+`from rationale_CNN import Preprocessor`
+`p = Preprocessor(MAX_FEATURES, MAX_SENT_LEN)`
+
+And then you'll need to instantiate Document instances for each of the items to be classified -- see `read_data` in `train_RA_CNN.py` for an example of this, or simply inspect the simple `Document` class. `Document` instances accept `Preprocessor` objects to generate sequences that constitute inputs to RA-CNN. 
+
+You'll next want to instantiate the model, like so: 
+
+`r_CNN = rationale_CNN.RationaleCNN(p, filters=[3,4,5])`
+            
+Many hyper-parameters can be set here. Then call:
+
+`r_CNN.build_sentence_model()`
+`r_CNN.train_sentence_model(documents, nb_epoch=nb_epoch_sentences)`
+`r_CNN.build_RA_CNN_model()`
+
+
+
+
+                                
+
 # acknowledgements & more info
 
 This work is part of the [RobotReviewer](https://robot-reviewer.vortext.systems/) project, and is generously supported by the National Institutes of Health (under the National Library of Medicine), grant R01-LM012086-01A1. 
