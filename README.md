@@ -50,11 +50,12 @@ You'll next want to instantiate the model, like so:
             
 Many hyper-parameters can be set here. Then call:
 
-`r_CNN.build_sentence_model()`
+```
+r_CNN.build_sentence_model()
+r_CNN.train_sentence_model(documents, nb_epoch=nb_epoch_sentences)
+r_CNN.build_RA_CNN_model()
+```
 
-`r_CNN.train_sentence_model(documents, nb_epoch=nb_epoch_sentences)`
-
-`r_CNN.build_RA_CNN_model()`
 
 
 
