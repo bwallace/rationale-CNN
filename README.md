@@ -1,5 +1,5 @@
 # rationale-CNN
-A [Keras](http://keras.io/) implementation of our CNNs with "rationales". Reference article: [https://arxiv.org/abs/1605.04469](https://arxiv.org/abs/1605.04469).
+A [Keras](http://keras.io/) implementation of our CNNs with "rationales". Reference article: [https://arxiv.org/abs/1605.04469](https://arxiv.org/abs/1605.04469) -- to appear in [http://www.emnlp2016.net/](EMNLP 2016).
 
 ![model schematic](https://raw.githubusercontent.com/bwallace/rationale-CNN/master/figures/rationale-CNN-figure.png)
 
@@ -51,7 +51,9 @@ You'll next want to instantiate the model, like so:
 Many hyper-parameters can be set here. Then call:
 
 `r_CNN.build_sentence_model()`
+
 `r_CNN.train_sentence_model(documents, nb_epoch=nb_epoch_sentences)`
+
 `r_CNN.build_RA_CNN_model()`
 
 
