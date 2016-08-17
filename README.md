@@ -3,9 +3,9 @@ A [Keras](http://keras.io/) implementation of our CNNs with "rationales". Refere
 
 >Ye Zhang, Iain J. Marshall and Byron C. Wallace *Rationale-Augmented Convolutional Neural Networks for Text Classification*, [EMNLP, 2016](http://www.emnlp2016.net/).
 
-However, we note that the results reported in our paper are from a Theano implementation of the model, which is available upon request (contact Ye Zhang <yezhang1989@gmail.com>).
-
 ![model schematic](https://raw.githubusercontent.com/bwallace/rationale-CNN/master/figures/rationale-CNN-figure.png)
+
+We note that the results reported in our paper are from a Theano implementation of the model, which is available upon request (contact Ye Zhang <yezhang1989@gmail.com>).
 
 # installing
 
