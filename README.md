@@ -39,28 +39,44 @@ For explanations regarding all possible arguments, use:
 
 In addition to the command line interface, you can of course instantiate the model directly (as in `train_RA_CNN.py`). To do this, you'll want to create a Preprocessor instance
 
-`from rationale_CNN import Preprocessor`
-`p = Preprocessor(MAX_FEATURES, MAX_SENT_LEN)`
+```
+from rationale_CNN import Preprocessor
+p = Preprocessor(MAX_FEATURES, MAX_SENT_LEN)
+```
 
 And then you'll need to instantiate Document instances for each of the items to be classified -- see `read_data` in `train_RA_CNN.py` for an example of this, or simply inspect the simple `Document` class. `Document` instances accept `Preprocessor` objects to generate sequences that constitute inputs to RA-CNN. 
 
 You'll next want to instantiate the model, like so: 
 
-`r_CNN = rationale_CNN.RationaleCNN(p, filters=[3,4,5])`
+```
+r_CNN = rationale_CNN.RationaleCNN(p)
+```
             
-Many hyper-parameters can be set here. Then call:
+Note that many hyper-parameters can be set here (e.g., filter sizes, dropout rates, etc.). Next we train the sentence model, ignoring the document level model for now:
 
 ```
 r_CNN.build_sentence_model()
 r_CNN.train_sentence_model(documents, nb_epoch=nb_epoch_sentences)
+```
+
+And once that's through, construct the full model, which will be initialized using sentence-level parameters as estimated in the previous step.
+
+```
 r_CNN.build_RA_CNN_model()
 ```
 
+Assemble X and y tensors; in particular, X should have dimensions (NUM_INSTANCES, MAX_DOC_LEN, MAX_SENT_LEN). This can be done by building up a list of sentence sequence vectors; again, see `train_RA_CNN.py` for a concrete example. Finally, you can train the document level model as usual: 
+
+```
+r_CNN.doc_model.fit(X_doc, y_doc)
+```
+
+## Making predictions and extracting rationales for new data
 
 
-
-
-                                
+```
+pred, rationales = r_CNN.predict_and_rank_sentences_for_doc(new_doc, num_rationales=3)
+```
 
 # acknowledgements & more info
 
