@@ -1,16 +1,20 @@
 '''
 @authors Byron Wallace, Edward Banner, Ye Zhang, Iain Marshall
 
-A Keras implementation of our "rationale augmented CNN" (https://arxiv.org/abs/1605.04469). Please note that
-the model was originally implemented in Theano; results reported in the paper are from said implementation. 
-This version is a work in progress. 
+A Keras implementation of our "rationale augmented CNN" (https://arxiv.org/abs/1605.04469); see
+reference below.
+
+Please note that the model was originally implemented in Theano; results reported in the paper 
+are from said implementation. This version is a work in progress. 
 
 Credit for initial pass of basic CNN implementation to: Cheng Guo (https://gist.github.com/entron).
+For a more basic implementation of CNN for text classification, see: 
+https://github.com/bwallace/CNN-for-text-classification
 
 References
 --
 Ye Zhang, Iain J. Marshall and Byron C. Wallace. "Rationale-Augmented Convolutional Neural Networks for Text Classification". http://arxiv.org/abs/1605.04469
-Yoon Kim. "Convolutional Neural Networks for Sentence Classification". EMNLP 2014.
+Yoon Kim. "Convolutional Neural Networks for Sentence Classification". EMNLP 2016.
 Ye Zhang and Byron Wallace. "A Sensitivity Analysis of (and Practitioners' Guide to) Convolutional Neural Networks for Sentence Classification". http://arxiv.org/abs/1510.03820.
 & c.f. http://www.wildml.com/2015/11/understanding-convolutional-neural-networks-for-nlp/
 '''
@@ -48,7 +52,7 @@ from keras.constraints import maxnorm
 
 class RationaleCNN:
 
-    def __init__(self, preprocessor, filters=None, n_filters=20,#32, 
+    def __init__(self, preprocessor, filters=None, n_filters=20, 
                         sent_dropout=0.5, doc_dropout=0.5, 
                         end_to_end_train=False):
         '''
@@ -70,6 +74,7 @@ class RationaleCNN:
         self.doc_dropout  = doc_dropout
         self.sentence_model_trained = False 
         self.end_to_end_train = end_to_end_train
+        self.sentence_prob_model = None 
 
     @staticmethod
     def get_weighted_sum_func(X, weights):
@@ -210,7 +215,7 @@ class RationaleCNN:
             weights, biases = cur_conv_layer.get_weights()
             # here it gets a bit tricky; we need dims 
             #       (nb_filters x 1 x 1 x (n_gram*embedding_dim))
-            # for 2d conv; our 1d conv model, though, will have
+            # for 2d conv. our 1d conv model, though, will have
             #       (nb_filters x embedding_dim x n_gram x 1)
             # need to reshape this. but first need to swap around
             # axes due to how reshape works (it iterates over last 
@@ -292,8 +297,62 @@ class RationaleCNN:
         # ... and compile
         self.doc_model = Model(input=tokens_input, output=doc_output)
         self.doc_model.compile(metrics=["accuracy"], loss="binary_crossentropy", optimizer="adadelta")
+
         print("rationale CNN model: ")
         print(self.doc_model.summary())
+
+
+    def set_final_sentence_model(self):
+        '''
+        allow convenient access to sentence-level predictions, after training
+        @TODO should really refactor so that this is the only sentence-level
+        model -- silly to have the sepearate thing as we currently do.
+        '''
+
+        '''
+        self.sentence_model = theano.function(
+                        [self.doc_model.get_input(train=False)], 
+                        convout1.get_output(train=False))
+        '''
+        sent_prob_outputs = self.doc_model.get_layer("sentence_predictions")
+        sent_model = K.function(inputs=self.doc_model.inputs + [K.learning_phase()], 
+                        outputs=[sent_prob_outputs.output])
+        self.sentence_prob_model = sent_model
+
+
+    def predict_and_rank_sentences_for_doc(self, doc, num_rationales=3):
+        '''
+        Given a Document instance, make doc-level prediction and return
+        rationales.
+        '''
+        # @TODO making two preds seems awkward/inefficient!
+        if self.sentence_prob_model is None:
+            self.set_final_sentence_model()
+
+        if doc.sentence_sequences is None:
+            # this will be the usual case
+            doc.generate_sequences(self.preprocessor)
+
+        X_doc = np.array([doc.get_padded_sequences(self.preprocessor, labels_too=False)])
+        
+        # doc pred
+        doc_pred = self.doc_model.predict(X_doc)[0][0]
+
+        # now rank sentences; 0 indicates 'test time'
+        sent_preds = self.sentence_prob_model(inputs=[X_doc, 0])[0].squeeze()
+
+        # recall: [1, 0, 0] -> positive rationale; [0, 1, 0] -> negative rationale
+        idx = 0
+        if doc_pred < .5:
+            # pick neg rationales
+            idx = 1
+
+        rationale_indices = sent_preds[:,idx].argsort()[-num_rationales:]
+        rationales = [doc.sentences[rationale_idx] for rationale_idx in 
+                            rationale_indices if not rationale_idx >= doc.num_sentences]
+        return (doc_pred, rationales)
+
+
 
 
     def build_sentence_model(self):
@@ -415,6 +474,15 @@ class RationaleCNN:
         self.sentence_model_trained = True
 
 
+    def get_top_sentences_for_doc(document):
+        if document.sentence_sequences is None:
+            document.generate_sequences(self.preprocessor)
+
+        # m = self._get_sent_model()
+
+        
+
+    '''
     def generate_sentence_predictions(documents, p):
         assert self.sentence_model_trained
 
@@ -433,7 +501,7 @@ class RationaleCNN:
             self.sentence_weights.append(d_probs)
 
         return d_probs
-
+    '''
 
 
 class Document:
@@ -485,14 +553,28 @@ class Document:
 
         return np.array(X), np.array(y)
 
-    def get_padded_sequences(self, p):
+    def get_padded_sequences_for_X(self, p, X):
+        n_sentences = X.shape[0]
+        if n_sentences > p.max_doc_len:
+            X = X[:p.max_doc_len]
+        elif n_sentences < p.max_doc_len:
+            # pad
+            dummy_rows = p.max_features * np.ones((p.max_doc_len-n_sentences, p.max_sent_len), dtype='int32') 
+            X = np.vstack((X, dummy_rows))
+        return np.array(X)
+
+
+    def get_padded_sequences(self, p, labels_too=True):
         # return p.build_sequences(self.sentences, pad_documents=True)              
         #n_sentences = self.sentence_sequences.shape[0]
         X = self.sentence_sequences
-        y = self.sentences_y
-        return self.get_padded_sequences_for_X_y(p, X, y)
 
+        if labels_too:
+            y = self.sentences_y
+            return self.get_padded_sequences_for_X_y(p, X, y)
 
+        # otherwise only return X
+        return self.get_padded_sequences_for_X(p, X)
 
 class Preprocessor:
     def __init__(self, max_features, max_sent_len, embedding_dims=200, wvs=None, max_doc_len=500):
@@ -504,7 +586,7 @@ class Preprocessor:
         '''
 
         self.max_features = max_features  
-        self.tokenizer = Tokenizer(nb_words=self.max_features, lower=False)
+        self.tokenizer = Tokenizer(nb_words=self.max_features)
         self.max_sent_len = max_sent_len  # the max sentence length! @TODO rename; this is confusing. 
         self.max_doc_len = max_doc_len # w.r.t. number of sentences!
 
