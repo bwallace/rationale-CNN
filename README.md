@@ -3,6 +3,8 @@ A [Keras](http://keras.io/) implementation of our CNNs with "rationales". Refere
 
 >Ye Zhang, Iain J. Marshall and Byron C. Wallace *Rationale-Augmented Convolutional Neural Networks for Text Classification*, [EMNLP, 2016](http://www.emnlp2016.net/).
 
+However, we note that the results reported in our paper are from a Theano implementation of the model, which is available upon request (contact Ye Zhang <yezhang1989@gmail.com>).
+
 ![model schematic](https://raw.githubusercontent.com/bwallace/rationale-CNN/master/figures/rationale-CNN-figure.png)
 
 # installing
@@ -73,7 +75,7 @@ Assemble X and y tensors; in particular, X should have dimensions (NUM_INSTANCES
 r_CNN.doc_model.fit(X_doc, y_doc)
 ```
 
-## Making predictions and extracting rationales for new data
+## making predictions and extracting rationales for new data
 
 To make predictions for a new instance, first again create a Document instance, `new_doc`. Then you can call: 
 
