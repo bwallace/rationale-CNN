@@ -73,10 +73,13 @@ r_CNN.doc_model.fit(X_doc, y_doc)
 
 ## Making predictions and extracting rationales for new data
 
+To make predictions for a new instance, first again create a Document instance, `new_doc`. Then you can call: 
 
 ```
 pred, rationales = r_CNN.predict_and_rank_sentences_for_doc(new_doc, num_rationales=3)
 ```
+
+Here, pred will be a scalar and `rationales` a list of extracted snippets supporting this. 
 
 # acknowledgements & more info
 
