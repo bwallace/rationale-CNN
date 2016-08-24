@@ -181,7 +181,9 @@ class RationaleCNN:
 
 
     def build_RA_CNN_model(self):
-        assert(self.sentence_model_trained)
+        if not self.sentence_model_trained:
+            print("warning -- sentence model has not been pre-trained!")
+        
 
         # input dim is (max_doc_len x max_sent_len) -- eliding the batch size
         tokens_input = Input(name='input', 
@@ -478,30 +480,7 @@ class RationaleCNN:
         if document.sentence_sequences is None:
             document.generate_sequences(self.preprocessor)
 
-        # m = self._get_sent_model()
 
-        
-
-    '''
-    def generate_sentence_predictions(documents, p):
-        assert self.sentence_model_trained
-
-        self.sentence_weights = []
-        for d in documents:
-            sent_probs = self.sentence_model.predict(d.sentence_sequences)
-            weights = np.amax(sent_probs[:,0:2],axis=1)
-            #weights = np.amax(sentence_predictions[:,0:2],axis=1)
-
-            # recall that we have padded the documents so there may be 
-            # many 0 vector sentences at the end; we want the predicted
-            # probabilities for these to be 0. 
-            # sent_probs[d.num_sentences-1:]=np.zeros()
-            d_probs = np.zeros(p.max_doc_len)
-            d_probs[:d.num_sentences] = weights
-            self.sentence_weights.append(d_probs)
-
-        return d_probs
-    '''
 
 
 class Document:
@@ -542,9 +521,6 @@ class Document:
             X = X[:p.max_doc_len]
             y = y[:p.max_doc_len]
         elif n_sentences < p.max_doc_len:
-            # pad
-            # @TODO I don'tt hink you should use zeros here?
-            #dummy_rows = np.zeros((p.max_doc_len-n_sentences, p.max_sent_len), dtype='int32')
             dummy_rows = p.max_features * np.ones((p.max_doc_len-n_sentences, p.max_sent_len), dtype='int32') 
             X = np.vstack((X, dummy_rows))
         
