@@ -77,22 +77,44 @@ class RationaleCNN:
         self.end_to_end_train = end_to_end_train
         self.sentence_prob_model = None 
 
+
     @staticmethod
-    def f_beta_score(y, y_pred, beta=1):
-        ''' for convienence '''
-        y_pred_binary = K.round(y_pred)
-        num_true = K.sum(y)
-        num_pred = K.sum(y_pred_binary)
-        tp = K.sum(y * y_pred_binary)
+    def metric_func_maker(metric_name="f", beta=1):
+        
+        return_recall=False
+        return_precision=False
+        
+        func_name = metric_name
+        if metric_name == "recall": 
+            return_recall = True 
+        elif metric_name == "precision":
+            return_precision = True 
+        else: 
+            func_name = "f_%s" % beta
+            
+        def f_beta_score(y, y_pred):
+            ''' for convienence '''
+            y_pred_binary = K.round(y_pred)
+            num_true = K.sum(y)
+            num_pred = K.sum(y_pred_binary)
+            tp = K.sum(y * y_pred_binary)
 
-        recall = K.switch(num_true>0, tp / num_true, 0)
-        precision = K.switch(num_pred>0, tp / num_pred, 0)
+            recall = K.switch(num_true>0, tp / num_true, 0)
+            if return_recall:
+                return recall
 
-        precision_recall_sum = recall + (beta*precision)
+            precision = K.switch(num_pred>0, tp / num_pred, 0)
+            if return_precision:
+                return precision 
 
-        return K.switch(precision_recall_sum>0, 
-                         (beta+1)*((precision*recall)/(precision_recall_sum)), 0)
+            precision_recall_sum = recall + (beta*precision)
 
+            return K.switch(precision_recall_sum>0, 
+                             (beta+1)*((precision*recall)/(precision_recall_sum)), 0)
+
+
+        f_beta_score.__name__ = func_name
+        return f_beta_score
 
     @staticmethod
     def get_weighted_sum_func(X, weights):
@@ -193,7 +215,7 @@ class RationaleCNN:
 
         self.doc_model = Model(input=tokens_input, output=output)
 
-        self.doc_model.compile(metrics=["accuracy", RationaleCNN.f_beta_score], 
+        self.doc_model.compile(metrics=["accuracy", RationaleCNN.metric_func_maker()], 
                                 loss="binary_crossentropy", optimizer="adadelta")
         print("doc-CNN model summary:")
         print(self.doc_model.summary())
@@ -317,7 +339,10 @@ class RationaleCNN:
         
         # ... and compile
         self.doc_model = Model(input=tokens_input, output=doc_output)
-        self.doc_model.compile(metrics=["accuracy", RationaleCNN.f_beta_score], 
+        self.doc_model.compile(metrics=["accuracy", 
+                                        RationaleCNN.metric_func_maker(metric_name="f"), 
+                                        RationaleCNN.metric_func_maker(metric_name="recall"), 
+                                        RationaleCNN.metric_func_maker(metric_name="precision")], 
                                 loss="binary_crossentropy", optimizer="adadelta")
 
         print("rationale CNN model: ")
