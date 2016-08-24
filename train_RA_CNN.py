@@ -2,6 +2,7 @@ from __future__ import print_function
 import math
 import csv
 import random 
+random.seed(1337)
 import pickle
 import sys
 csv.field_size_limit(sys.maxsize)
@@ -162,6 +163,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
                                     max_doc_len=max_doc_len, 
                                     wvs=wvs)
 
+    # need to do this!
     p.preprocess(all_sentences)
     for d in documents: 
         d.generate_sequences(p)
@@ -175,8 +177,8 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     ###################################
     # 1. build & train sentence model #
     ###################################
-    if model_name == "rationale-CNN":
-        print("fitting sentence model...")
+    if model_name == "rationale-CNN" and nb_epoch_sentences>0:
+        print("pre-training sentence model...")
         r_CNN.build_sentence_model()
         r_CNN.train_sentence_model(documents, nb_epoch=nb_epoch_sentences, 
                                     sent_val_split=val_split)
@@ -225,6 +227,14 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
 
     # load best weights back in
     r_CNN.doc_model.load_weights(doc_weights_path)
+    # set the final sentence model, which outputs per-sentence
+    # predictions regarding rationales. this is admittedly
+    # kind of an awkward way of doing things. but in any case
+    # now you can call: 
+    #   r_CNN.predict_and_rank_sentences_for_doc(new_doc, num_rationales=3) 
+    # where new_doc is a Document instance. 
+    r_CNN.set_final_sentence_model()
+
 
     return r_CNN, documents, p, X_doc, np.array(y_doc), best_performance
 
@@ -320,7 +330,7 @@ if __name__ == "__main__":
                                     val_split=options.val_split,
                                     shuffle_data=options.shuffle_data,
                                     n_filters=options.n_filters,
-                                    batch_size=options.batch_size,
+                                    #batch_size=options.batch_size,
                                     max_sent_len=options.max_sent_len,
                                     max_doc_len=options.max_doc_len,
                                     max_features=options.max_features,
