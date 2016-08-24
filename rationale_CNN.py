@@ -506,7 +506,7 @@ class RationaleCNN:
 
 class Document:
     def __init__(self, doc_id, sentences, doc_label=None, sentences_labels=None, 
-                    min_sent_len=3):
+                    min_sent_len=1):
         self.doc_id = doc_id
         self.doc_y = doc_label
 
