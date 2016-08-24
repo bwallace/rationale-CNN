@@ -50,6 +50,7 @@ from keras.preprocessing.text import text_to_word_sequence, Tokenizer
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.constraints import maxnorm
 
+
 class RationaleCNN:
 
     def __init__(self, preprocessor, filters=None, n_filters=20, 
@@ -75,6 +76,23 @@ class RationaleCNN:
         self.sentence_model_trained = False 
         self.end_to_end_train = end_to_end_train
         self.sentence_prob_model = None 
+
+    @staticmethod
+    def f_beta_score(y, y_pred, beta=1):
+        ''' for convienence '''
+        y_pred_binary = K.round(y_pred)
+        num_true = K.sum(y)
+        num_pred = K.sum(y_pred_binary)
+        tp = K.sum(y * y_pred_binary)
+
+        recall = K.switch(num_true>0, tp / num_true, 0)
+        precision = K.switch(num_pred>0, tp / num_pred, 0)
+
+        precision_recall_sum = recall + (beta*precision)
+
+        return K.switch(precision_recall_sum>0, 
+                         (beta+1)*((precision*recall)/(precision_recall_sum)), 0)
+
 
     @staticmethod
     def get_weighted_sum_func(X, weights):
@@ -175,7 +193,8 @@ class RationaleCNN:
 
         self.doc_model = Model(input=tokens_input, output=output)
 
-        self.doc_model.compile(metrics=["accuracy"], loss="binary_crossentropy", optimizer="adadelta")
+        self.doc_model.compile(metrics=["accuracy", RationaleCNN.f_beta_score], 
+                                loss="binary_crossentropy", optimizer="adadelta")
         print("doc-CNN model summary:")
         print(self.doc_model.summary())
 
@@ -298,7 +317,8 @@ class RationaleCNN:
         
         # ... and compile
         self.doc_model = Model(input=tokens_input, output=doc_output)
-        self.doc_model.compile(metrics=["accuracy"], loss="binary_crossentropy", optimizer="adadelta")
+        self.doc_model.compile(metrics=["accuracy", RationaleCNN.f_beta_score], 
+                                loss="binary_crossentropy", optimizer="adadelta")
 
         print("rationale CNN model: ")
         print(self.doc_model.summary())
@@ -312,9 +332,12 @@ class RationaleCNN:
         '''
 
         '''
-        self.sentence_model = theano.function(
-                        [self.doc_model.get_input(train=False)], 
-                        convout1.get_output(train=False))
+           File "train_RA_CNN.py", line 339, in <module>
+            end_to_end_train=options.end_to_end_train)
+          File "train_RA_CNN.py", line 238, in train_CNN_rationales_model
+            r_CNN.set_final_sentence_model()
+          File "/home/ubuntu/rationale-CNN/rationale_CNN.py", line 319, in set_final_sentence_model
+            outputs=[sent_prob_outputs.output])
         '''
         sent_prob_outputs = self.doc_model.get_layer("sentence_predictions")
         sent_model = K.function(inputs=self.doc_model.inputs + [K.learning_phase()], 
@@ -396,7 +419,7 @@ class RationaleCNN:
         print("model built")
         print(self.sentence_model.summary())
         self.sentence_model.compile(loss='categorical_crossentropy', 
-                                    metrics=['accuracy'], optimizer="adagrad")
+                                    metrics=['accuracy', ], optimizer="adagrad")
 
         return self.sentence_model 
 
