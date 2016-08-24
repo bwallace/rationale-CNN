@@ -5,6 +5,8 @@ A [Keras](http://keras.io/) implementation of our CNNs with "rationales". Refere
 
 ![model schematic](https://raw.githubusercontent.com/bwallace/rationale-CNN/master/figures/rationale-CNN-figure.png)
 
+We note that the results reported in our paper are from a Theano implementation of the model, which is available upon request (contact Ye Zhang <yezhang1989@gmail.com>).
+
 # installing
 
 This should run fine in Python 2.7 or 3.x. Requires the usual stack of numpy/scipy/pandas, plus an up-to-date version of [Keras](http://keras.io/); we developed and test on 1.0.5. 
@@ -73,7 +75,7 @@ Assemble X and y tensors; in particular, X should have dimensions (NUM_INSTANCES
 r_CNN.doc_model.fit(X_doc, y_doc)
 ```
 
-## Making predictions and extracting rationales for new data
+## making predictions and extracting rationales for new data
 
 To make predictions for a new instance, first again create a Document instance, `new_doc`. Then you can call: 
 
@@ -81,7 +83,7 @@ To make predictions for a new instance, first again create a Document instance, 
 pred, rationales = r_CNN.predict_and_rank_sentences_for_doc(new_doc, num_rationales=3)
 ```
 
-Here, pred will be a scalar and `rationales` a list of extracted snippets supporting this. 
+Here, `pred` will be a scalar and `rationales` a list of extracted snippets supporting this. 
 
 # acknowledgements & more info
 
