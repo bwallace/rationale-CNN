@@ -215,8 +215,11 @@ class RationaleCNN:
 
         self.doc_model = Model(input=tokens_input, output=output)
 
-        self.doc_model.compile(metrics=["accuracy", RationaleCNN.metric_func_maker()], 
-                                loss="binary_crossentropy", optimizer="adadelta")
+        self.doc_model.compile(metrics=["accuracy",     
+                                        RationaleCNN.metric_func_maker(metric_name="f"), 
+                                        RationaleCNN.metric_func_maker(metric_name="recall"), 
+                                        RationaleCNN.metric_func_maker(metric_name="precision")], 
+                                        loss="binary_crossentropy", optimizer="adadelta")
         print("doc-CNN model summary:")
         print(self.doc_model.summary())
 
