@@ -602,7 +602,7 @@ class RationaleCNN:
                                     save_best_only=True,
                                     mode="max")
 
-            import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
 
             hist = self.doc_model.fit(X_doc, y_doc, 
                         nb_epoch=nb_epoch, 
