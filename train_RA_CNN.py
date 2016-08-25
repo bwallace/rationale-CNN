@@ -85,7 +85,7 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
                                 document_dropout=0.5, run_name="RSG",
                                 shuffle_data=False, n_filters=32, max_features=20000, 
                                 max_sent_len=25, max_doc_len=200,
-                                end_to_end_train=False):
+                                end_to_end_train=False, downsample=False):
     '''
     NOTE: at the moment this is using *all* training data; obviously need to set 
     aside the actual test fold (as we did for the paper experiments in Theano
@@ -115,7 +115,8 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
                                 max_features=max_features, 
                                 max_sent_len=max_sent_len, 
                                 max_doc_len=max_doc_len,
-                                end_to_end_train=end_to_end_train)
+                                end_to_end_train=end_to_end_train,
+                                downsample=downsample)
         
         perf_d[sent_dropout] = best_performance
 
@@ -144,7 +145,8 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
                                 max_sent_len=25, max_doc_len=200,
                                 n_filters=32,
                                 batch_size=50,
-                                end_to_end_train=False):
+                                end_to_end_train=False,
+                                downsample=False):
     
     if documents is None:
         documents = read_data(path=data_path)
@@ -233,7 +235,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     best_performance = np.max(hist.history['val_acc'])
     '''
     r_CNN.train_document_model(documents, nb_epoch=nb_epoch_doc, 
-                                downsample=True, 
+                                downsample=downsample,
                                 batch_size=batch_size,
                                 doc_val_split=.2, 
                                 document_model_weights_path="document_model_weights.hdf5")
@@ -323,6 +325,11 @@ if __name__ == "__main__":
         help="line search over sentence dropout parameter?", 
         action='store_true', default=False)
 
+    parser.add_option('--ds', '--down-sample', dest="downsample",
+        help="create balanced mini-batches during training?", 
+        action='store_true', default=False)
+
+
     (options, args) = parser.parse_args()
   
     config = configparser.ConfigParser()
@@ -348,7 +355,8 @@ if __name__ == "__main__":
                                     max_sent_len=options.max_sent_len,
                                     max_doc_len=options.max_doc_len,
                                     max_features=options.max_features,
-                                    end_to_end_train=options.end_to_end_train)
+                                    end_to_end_train=options.end_to_end_train, 
+                                    downsample=options.downsample)
     else:
         print("line searching!")
         line_search_train(data_path, wv_path, model_name=options.model, 
@@ -363,4 +371,5 @@ if __name__ == "__main__":
                                     max_sent_len=options.max_sent_len,
                                     max_doc_len=options.max_doc_len,
                                     max_features=options.max_features,
+                                    downsample=options.downsample,
                                     end_to_end_train=options.end_to_end_train)
