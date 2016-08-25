@@ -604,7 +604,7 @@ class RationaleCNN:
 
             hist = self.doc_model.fit(X_doc, y_doc, 
                         nb_epoch=nb_epoch, 
-                        validation_data=(X_validation, y_validation),
+                        validation_data=(X_doc_validation, y_doc_validation),
                         callbacks=[checkpointer],
                         batch_size=batch_size)
 
