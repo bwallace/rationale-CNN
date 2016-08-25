@@ -573,7 +573,7 @@ class RationaleCNN:
 
         if downsample:
             print("downsampling!")
-            
+
             cur_f, best_f = None, np.inf 
 
             # then draw nb_epoch balanced samples; take one pass on each
@@ -596,7 +596,7 @@ class RationaleCNN:
                     print("new best F: %s" % best_f)
 
         else:
-            checkpointer = ModelCheckpoint(filepath=document_weights_path, 
+            checkpointer = ModelCheckpoint(filepath=document_model_weights_path, 
                                     verbose=1,
                                     monitor="f_%s" % self.f_beta, 
                                     save_best_only=True)
@@ -610,7 +610,7 @@ class RationaleCNN:
 
 
         # reload best weights
-        self.doc_model.load_weights(doc_weights_path)
+        self.doc_model.load_weights(documen_model_weights_path)
 
 class Document:
     def __init__(self, doc_id, sentences, doc_label=None, sentences_labels=None, 
