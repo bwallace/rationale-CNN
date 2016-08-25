@@ -564,9 +564,9 @@ class RationaleCNN:
         y_sent_validation = []
         for d in train_documents[-validation_size:]:
             cur_X, cur_sent_y = d.get_padded_sequences(self.preprocessor)
-            X_doc_validation.extend(cur_X)
+            X_doc_validation.append(cur_X)
             y_doc_validation.append(d.doc_y)
-            y_sent_validation.extend(cur_sent_y)
+            y_sent_validation.append(cur_sent_y)
         X_doc_validation = np.array(X_doc_validation)
         y_doc_validation = np.array(y_doc_validation)
 
@@ -602,6 +602,7 @@ class RationaleCNN:
                                     save_best_only=True,
                                     mode="max")
 
+            import pdb; pdb.set_trace()
 
             hist = self.doc_model.fit(X_doc, y_doc, 
                         nb_epoch=nb_epoch, 
