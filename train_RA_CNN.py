@@ -21,9 +21,9 @@ from gensim.models import Word2Vec
 
 from keras.callbacks import ModelCheckpoint
 
+
 import rationale_CNN
 from rationale_CNN import Document
-
 
 
 def load_trained_w2v_model(path="/work/03213/bwallace/maverick/RoB_CNNs/PubMed-w2v.bin"):
@@ -136,7 +136,6 @@ def line_search_train(data_path, wvs_path, documents=None, test_mode=False,
 
 
 
-
 def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=False, 
                                 model_name="rationale-CNN", 
                                 nb_epoch_sentences=20, nb_epoch_doc=25, val_split=.1,
@@ -196,6 +195,8 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     else: 
         r_CNN.build_RA_CNN_model()
 
+    '''
+    # 8/24
     X_doc, y_doc = [], []
     y_sent = []
     for d in documents:
@@ -206,14 +207,18 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
 
     X_doc = np.array(X_doc)
     y_doc = np.array(y_doc)
-    
+    '''
 
     # write out model architecture
     json_string = r_CNN.doc_model.to_json() 
     with open("%s_model.json" % model_name, 'w') as outf:
         outf.write(json_string)
 
+
     doc_weights_path = "%s_%s.hdf5" % (model_name, run_name)
+    
+
+    '''
     checkpointer = ModelCheckpoint(filepath=doc_weights_path, 
                                     verbose=1,
                                     monitor="val_acc",
@@ -226,6 +231,13 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
                         batch_size=batch_size)
 
     best_performance = np.max(hist.history['val_acc'])
+    '''
+    r_CNN.train_document_model(documents, nb_epoch=nb_epoch_doc, 
+                                downsample=True, 
+                                batch_size=batch_size,
+                                doc_val_split=.2, 
+                                document_model_weights_path="document_model_weights.hdf5")
+    
 
     # load best weights back in
     r_CNN.doc_model.load_weights(doc_weights_path)

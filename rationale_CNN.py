@@ -55,7 +55,7 @@ class RationaleCNN:
 
     def __init__(self, preprocessor, filters=None, n_filters=20, 
                         sent_dropout=0.5, doc_dropout=0.5, 
-                        end_to_end_train=False):
+                        end_to_end_train=False, f_beta=2):
         '''
         parameters
         ---
@@ -76,7 +76,7 @@ class RationaleCNN:
         self.sentence_model_trained = False 
         self.end_to_end_train = end_to_end_train
         self.sentence_prob_model = None 
-
+        self.f_beta = f_beta
 
     @staticmethod
     def metric_func_maker(metric_name="f", beta=1):
@@ -133,18 +133,27 @@ class RationaleCNN:
         return tuple((1, shape[-1]))
 
     @staticmethod
-    def balanced_sample(X, y):
-        _, pos_rationale_indices = np.where([y[:,0] > 0]) 
-        _, neg_rationale_indices = np.where([y[:,1] > 0]) 
-        _, non_rationale_indices = np.where([y[:,2] > 0]) 
+    def balanced_sample(X, y, binary=False):
+        if binary:
+            _, neg_indices = np.where([y <= 0]) 
+            _, pos_indices = np.where([y > 0])
+            sampled_neg_indices = np.random.choice(pos_indices, pos_indices.shape[0], replace=False)
+            train_indices = np.concatenate([pos_indices, sampled_neg_indices])
+            np.random.shuffle(train_indices) # why not
+        else:        
+            _, pos_rationale_indices = np.where([y[:,0] > 0]) 
+            _, neg_rationale_indices = np.where([y[:,1] > 0]) 
+            _, non_rationale_indices = np.where([y[:,2] > 0]) 
 
-        # sample a number of non-rationales equal to the total
-        # number of pos/neg rationales. 
-        m = pos_rationale_indices.shape[0] + neg_rationale_indices.shape[0]
-                                        # np.array(random.sample(non_rationale_indices, m)) 
-        sampled_non_rationale_indices = np.random.choice(non_rationale_indices, m, replace=False)
+            # sample a number of non-rationales equal to the total
+            # number of pos/neg rationales. 
+            m = pos_rationale_indices.shape[0] + neg_rationale_indices.shape[0]
+                                            # np.array(random.sample(non_rationale_indices, m)) 
+            sampled_non_rationale_indices = np.random.choice(non_rationale_indices, m, replace=False)
 
-        train_indices = np.concatenate([pos_rationale_indices, neg_rationale_indices, sampled_non_rationale_indices])
+            train_indices = np.concatenate([pos_rationale_indices, neg_rationale_indices, sampled_non_rationale_indices])
+            
+
         np.random.shuffle(train_indices) # why not
         return X[train_indices,:], y[train_indices]
 
@@ -216,7 +225,7 @@ class RationaleCNN:
         self.doc_model = Model(input=tokens_input, output=output)
 
         self.doc_model.compile(metrics=["accuracy",     
-                                        RationaleCNN.metric_func_maker(metric_name="f"), 
+                                        RationaleCNN.metric_func_maker(metric_name="f", beta=self.f_beta), 
                                         RationaleCNN.metric_func_maker(metric_name="recall"), 
                                         RationaleCNN.metric_func_maker(metric_name="precision")], 
                                         loss="binary_crossentropy", optimizer="adadelta")
@@ -527,12 +536,81 @@ class RationaleCNN:
         self.sentence_model_trained = True
 
 
-    def get_top_sentences_for_doc(document):
-        if document.sentence_sequences is None:
-            document.generate_sequences(self.preprocessor)
+    def train_document_model(self, train_documents, nb_epoch=5, downsample=False, 
+                                doc_val_split=.2, batch_size=50,
+                                document_model_weights_path="document_model_weights.hdf5"):
+
+        validation_size = int(doc_val_split*len(train_documents))
+        print("validating using %s documents." % validation_size)
+
+        ###
+        # build the train set
+        ###
+        X_doc, y_doc = [], []
+        y_sent = []
+        for d in train_documents[:-validation_size]:
+            cur_X, cur_sent_y = d.get_padded_sequences(self.preprocessor)
+            X_doc.append(cur_X)
+            y_doc.append(d.doc_y)
+            y_sent.append(cur_sent_y)
+        X_doc = np.array(X_doc)
+        y_doc = np.array(y_doc)
+
+        ####
+        # @TODO refactor (rather redundant with above...)
+        # and the validation set. 
+        ####
+        X_doc_validation, y_doc_validation = [], []
+        y_sent_validation = []
+        for d in train_documents[-validation_size:]:
+            cur_X, cur_sent_y = d.get_padded_sequences(self.preprocessor)
+            X_doc_validation.extend(cur_X)
+            y_doc_validation.append(d.doc_y)
+            y_sent_validation.extend(cur_sent_y)
+        X_doc_validation = np.array(X_doc)
+        y_doc_validation = np.array(y_doc)
 
 
+        if downsample:
+            print("downsampling!")
+            
+            cur_f, best_f = None, np.inf 
 
+            # then draw nb_epoch balanced samples; take one pass on each
+            for iter_ in range(nb_epoch):
+
+                print ("on epoch: %s" % iter_)
+
+                X_tmp, y_tmp = RationaleCNN.balanced_sample(X_doc, y_doc, binary=True)
+
+                self.doc_model.fit(X_tmp, y_tmp, batch_size=batch_size, nb_epoch=1)
+
+                cur_val_results = self.doc_model.evaluate(X_doc_validation, y_doc_validation)
+                out_str = ["%s: %s" % (metric, val) for metric, val in zip(self.doc_model.metrics_names, cur_val_results)]
+                print ("\n".join(out_str))
+
+                loss, cur_acc, cur_f, cur_recall, cur_precision = cur_val_results                
+                if cur_f > best_f:
+                    best_f = cur_f
+                    self.doc_model.save_weights(document_model_weights_path, overwrite=True)
+                    print("new best F: %s" % best_f)
+
+        else:
+            checkpointer = ModelCheckpoint(filepath=document_weights_path, 
+                                    verbose=1,
+                                    monitor="f_%s" % self.f_beta, 
+                                    save_best_only=True)
+
+
+            hist = self.doc_model.fit(X_doc, y_doc, 
+                        nb_epoch=nb_epoch, 
+                        validation_data=(X_validation, y_validation),
+                        callbacks=[checkpointer],
+                        batch_size=batch_size)
+
+
+        # reload best weights
+        self.doc_model.load_weights(doc_weights_path)
 
 class Document:
     def __init__(self, doc_id, sentences, doc_label=None, sentences_labels=None, 
