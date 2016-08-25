@@ -325,7 +325,7 @@ if __name__ == "__main__":
         help="line search over sentence dropout parameter?", 
         action='store_true', default=False)
 
-    parser.add_option('--ds', '--down-sample', dest="downsample",
+    parser.add_option('--ds', '--downsample', dest="downsample",
         help="create balanced mini-batches during training?", 
         action='store_true', default=False)
 
