@@ -574,7 +574,7 @@ class RationaleCNN:
         if downsample:
             print("downsampling!")
 
-            cur_f, best_f = None, -np.inf 
+            cur_f, best_f = None, -np.inf  # - inf for F-score
 
             # then draw nb_epoch balanced samples; take one pass on each
             for iter_ in range(nb_epoch):
