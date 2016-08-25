@@ -567,14 +567,14 @@ class RationaleCNN:
             X_doc_validation.extend(cur_X)
             y_doc_validation.append(d.doc_y)
             y_sent_validation.extend(cur_sent_y)
-        X_doc_validation = np.array(X_doc)
-        y_doc_validation = np.array(y_doc)
+        X_doc_validation = np.array(X_doc_validation)
+        y_doc_validation = np.array(y_doc_validation)
 
 
         if downsample:
             print("downsampling!")
 
-            cur_f, best_f = None, np.inf 
+            cur_f, best_f = None, -np.inf 
 
             # then draw nb_epoch balanced samples; take one pass on each
             for iter_ in range(nb_epoch):
@@ -599,7 +599,8 @@ class RationaleCNN:
             checkpointer = ModelCheckpoint(filepath=document_model_weights_path, 
                                     verbose=1,
                                     monitor="f_%s" % self.f_beta, 
-                                    save_best_only=True)
+                                    save_best_only=True,
+                                    mode="max")
 
 
             hist = self.doc_model.fit(X_doc, y_doc, 
