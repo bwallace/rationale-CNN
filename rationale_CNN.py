@@ -610,7 +610,7 @@ class RationaleCNN:
 
 
         # reload best weights
-        self.doc_model.load_weights(documen_model_weights_path)
+        self.doc_model.load_weights(document_model_weights_path)
 
 class Document:
     def __init__(self, doc_id, sentences, doc_label=None, sentences_labels=None, 
