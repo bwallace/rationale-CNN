@@ -319,6 +319,10 @@ if __name__ == "__main__":
         help="number of filters (per n-gram)", 
         default=32, type="int")
 
+    parser.add_option('--pcw', '--pos-class-weight', dest="pos_class_weight",
+        help="weight for positive class (relative to neg)", 
+        default=1, type="int")
+
     parser.add_option('--bs', '--batch-size', dest="batch_size",
         help="batch size", 
         default=50, type="int")
@@ -366,7 +370,8 @@ if __name__ == "__main__":
                                     max_features=options.max_features,
                                     end_to_end_train=options.end_to_end_train, 
                                     downsample=options.downsample,
-                                    stopword=options.stopword)
+                                    stopword=options.stopword,
+                                    pos_class_weight=options.pos_class_weight)
     else:
         print("line searching!")
         line_search_train(data_path, wv_path, model_name=options.model, 

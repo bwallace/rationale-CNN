@@ -535,7 +535,8 @@ class RationaleCNN:
 
     def train_document_model(self, train_documents, nb_epoch=5, downsample=False, 
                                 doc_val_split=.2, batch_size=50,
-                                document_model_weights_path="document_model_weights.hdf5"):
+                                document_model_weights_path="document_model_weights.hdf5",
+                                pos_class_weight=1):
 
         validation_size = int(doc_val_split*len(train_documents))
         print("validating using %s out of %s train documents." % (validation_size, len(train_documents)))
@@ -580,7 +581,8 @@ class RationaleCNN:
 
                 X_tmp, y_tmp = RationaleCNN.balanced_sample(X_doc, y_doc, binary=True)
 
-                self.doc_model.fit(X_tmp, y_tmp, batch_size=batch_size, nb_epoch=1)
+                self.doc_model.fit(X_tmp, y_tmp, batch_size=batch_size, nb_epoch=1,
+                                         class_weight={0:1, 1:pos_class_weight})
 
                 cur_val_results = self.doc_model.evaluate(X_doc_validation, y_doc_validation)
                 out_str = ["%s: %s" % (metric, val) for metric, val in zip(self.doc_model.metrics_names, cur_val_results)]
@@ -598,7 +600,8 @@ class RationaleCNN:
                                     verbose=1,
                                     monitor="f_%s" % self.f_beta, 
                                     save_best_only=True,
-                                    mode="max")
+                                    mode="max",
+                                    class_weight={0:1, 1:pos_class_weight})
 
 
             hist = self.doc_model.fit(X_doc, y_doc, 
