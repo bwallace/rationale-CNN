@@ -496,7 +496,7 @@ class RationaleCNN:
  
         if downsample:
             # should we downsample *validation* set???
-            X_validation, y_validation =  RationaleCNN.balanced_sample(X_validation, y_validation)
+            #X_validation, y_validation =  RationaleCNN.balanced_sample(X_validation, y_validation)
 
             cur_loss, best_loss = None, np.inf 
 
