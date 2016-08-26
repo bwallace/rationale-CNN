@@ -496,7 +496,7 @@ class RationaleCNN:
  
         if downsample:
             # should we downsample *validation* set???
-            #X_validation, y_validation =  RationaleCNN.balanced_sample(X_validation, y_validation)
+            X_validation, y_validation =  RationaleCNN.balanced_sample(X_validation, y_validation)
 
             cur_loss, best_loss = None, np.inf 
 
@@ -538,7 +538,7 @@ class RationaleCNN:
                                 document_model_weights_path="document_model_weights.hdf5"):
 
         validation_size = int(doc_val_split*len(train_documents))
-        print("validating using %s documents." % validation_size)
+        print("validating using %s out of %s train documents." % (validation_size, len(train_documents)))
 
         ###
         # build the train set
@@ -590,7 +590,8 @@ class RationaleCNN:
                 if cur_f > best_f:
                     best_f = cur_f
                     self.doc_model.save_weights(document_model_weights_path, overwrite=True)
-                    print("new best F: %s" % best_f)
+                    print("new best F: %s\n" % best_f)
+
 
         else:
             checkpointer = ModelCheckpoint(filepath=document_model_weights_path, 
