@@ -147,7 +147,8 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
                                 batch_size=50,
                                 end_to_end_train=False,
                                 downsample=False,
-                                stopword=True):
+                                stopword=True,
+                                pos_class_weight=1):
     
     if documents is None:
         documents = read_data(path=data_path)
@@ -185,7 +186,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
         if nb_epoch_sentences > 0:
             print("pre-training sentence model for %s epochs..." % nb_epoch_sentences)
             r_CNN.train_sentence_model(documents, nb_epoch=nb_epoch_sentences, 
-                                        sent_val_split=val_split)
+                                        sent_val_split=val_split, downsample=True)
             print("done.")
 
 
@@ -239,6 +240,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
                                 downsample=downsample,
                                 batch_size=batch_size,
                                 doc_val_split=.2, 
+                                pos_class_weight=pos_class_weight,
                                 document_model_weights_path="document_model_weights.hdf5")
     
 
@@ -256,7 +258,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
 
 
     # return r_CNN, documents, p, X_doc, np.array(y_doc), best_performance
-    return r_CNN, documents, p, best_performance
+    return r_CNN, documents, p
 
 
 
