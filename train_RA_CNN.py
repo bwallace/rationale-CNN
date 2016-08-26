@@ -250,7 +250,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     # now you can call: 
     #   r_CNN.predict_and_rank_sentences_for_doc(new_doc, num_rationales=3) 
     # where new_doc is a Document instance. 
-    model_name == "rationale-CNN":
+    if model_name == "rationale-CNN":
         r_CNN.set_final_sentence_model()
 
 
