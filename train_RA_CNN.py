@@ -146,7 +146,8 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
                                 n_filters=32,
                                 batch_size=50,
                                 end_to_end_train=False,
-                                downsample=False):
+                                downsample=False,
+                                stopword=True):
     
     if documents is None:
         documents = read_data(path=data_path)
@@ -162,7 +163,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     p = rationale_CNN.Preprocessor(max_features=max_features, 
                                     max_sent_len=max_sent_len, 
                                     max_doc_len=max_doc_len, 
-                                    wvs=wvs)
+                                    wvs=wvs, stopword=stopword)
 
     # need to do this!
     p.preprocess(all_sentences)
@@ -331,6 +332,10 @@ if __name__ == "__main__":
         action='store_true', default=False)
 
 
+    parser.add_option('--sw', '--stopword', dest="stopword",
+        help="performing stopwording?", 
+        action='store_true', default=True)
+
     (options, args) = parser.parse_args()
   
     config = configparser.ConfigParser()
@@ -352,12 +357,13 @@ if __name__ == "__main__":
                                     val_split=options.val_split,
                                     shuffle_data=options.shuffle_data,
                                     n_filters=options.n_filters,
-                                    #batch_size=options.batch_size,
+                                    batch_size=options.batch_size,
                                     max_sent_len=options.max_sent_len,
                                     max_doc_len=options.max_doc_len,
                                     max_features=options.max_features,
                                     end_to_end_train=options.end_to_end_train, 
-                                    downsample=options.downsample)
+                                    downsample=options.downsample,
+                                    stopword=options.stopword)
     else:
         print("line searching!")
         line_search_train(data_path, wv_path, model_name=options.model, 
