@@ -250,7 +250,9 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     # now you can call: 
     #   r_CNN.predict_and_rank_sentences_for_doc(new_doc, num_rationales=3) 
     # where new_doc is a Document instance. 
-    r_CNN.set_final_sentence_model()
+    model_name == "rationale-CNN":
+        r_CNN.set_final_sentence_model()
+
 
 
     # return r_CNN, documents, p, X_doc, np.array(y_doc), best_performance
@@ -331,10 +333,9 @@ if __name__ == "__main__":
         help="create balanced mini-batches during training?", 
         action='store_true', default=False)
 
-
     parser.add_option('--sw', '--stopword', dest="stopword",
         help="performing stopwording?", 
-        action='store_true', default=True)
+        action='store_true', default=False)
 
     (options, args) = parser.parse_args()
   
