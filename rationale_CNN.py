@@ -710,19 +710,25 @@ class Preprocessor:
         # lifted directly from spacy's EN list
         self.stopwords = [u'all', u'six', u'just', u'less', u'being', u'indeed', u'over', u'move', u'anyway', u'four', u'not', u'own', u'through', u'using', u'fify', u'where', u'mill', u'only', u'find', u'before', u'one', u'whose', u'system', u'how', u'somewhere', u'much', u'thick', u'show', u'had', u'enough', u'should', u'to', u'must', u'whom', u'seeming', u'yourselves', u'under', u'ours', u'two', u'has', u'might', u'thereafter', u'latterly', u'do', u'them', u'his', u'around', u'than', u'get', u'very', u'de', u'none', u'cannot', u'every', u'un', u'they', u'front', u'during', u'thus', u'now', u'him', u'nor', u'name', u'regarding', u'several', u'hereafter', u'did', u'always', u'who', u'didn', u'whither', u'this', u'someone', u'either', u'each', u'become', u'thereupon', u'sometime', u'side', u'towards', u'therein', u'twelve', u'because', u'often', u'ten', u'our', u'doing', u'km', u'eg', u'some', u'back', u'used', u'up', u'go', u'namely', u'computer', u'are', u'further', u'beyond', u'ourselves', u'yet', u'out', u'even', u'will', u'what', u'still', u'for', u'bottom', u'mine', u'since', u'please', u'forty', u'per', u'its', u'everything', u'behind', u'does', u'various', u'above', u'between', u'it', u'neither', u'seemed', u'ever', u'across', u'she', u'somehow', u'be', u'we', u'full', u'never', u'sixty', u'however', u'here', u'otherwise', u'were', u'whereupon', u'nowhere', u'although', u'found', u'alone', u're', u'along', u'quite', u'fifteen', u'by', u'both', u'about', u'last', u'would', u'anything', u'via', u'many', u'could', u'thence', u'put', u'against', u'keep', u'etc', u'amount', u'became', u'ltd', u'hence', u'onto', u'or', u'con', u'among', u'already', u'co', u'afterwards', u'formerly', u'within', u'seems', u'into', u'others', u'while', u'whatever', u'except', u'down', u'hers', u'everyone', u'done', u'least', u'another', u'whoever', u'moreover', u'couldnt', u'throughout', u'anyhow', u'yourself', u'three', u'from', u'her', u'few', u'together', u'top', u'there', u'due', u'been', u'next', u'anyone', u'eleven', u'cry', u'call', u'therefore', u'interest', u'then', u'thru', u'themselves', u'hundred', u'really', u'sincere', u'empty', u'more', u'himself', u'elsewhere', u'mostly', u'on', u'fire', u'am', u'becoming', u'hereby', u'amongst', u'else', u'part', u'everywhere', u'too', u'kg', u'herself', u'former', u'those', u'he', u'me', u'myself', u'made', u'twenty', u'these', u'was', u'bill', u'cant', u'us', u'until', u'besides', u'nevertheless', u'below', u'anywhere', u'nine', u'can', u'whether', u'of', u'your', u'toward', u'my', u'say', u'something', u'and', u'whereafter', u'whenever', u'give', u'almost', u'wherever', u'is', u'describe', u'beforehand', u'herein', u'doesn', u'an', u'as', u'itself', u'at', u'have', u'in', u'seem', u'whence', u'ie', u'any', u'fill', u'again', u'hasnt', u'inc', u'thereby', u'thin', u'no', u'perhaps', u'latter', u'meanwhile', u'when', u'detail', u'same', u'wherein', u'beside', u'also', u'that', u'other', u'take', u'which', u'becomes', u'you', u'if', u'nobody', u'unless', u'whereas', u'see', u'though', u'may', u'after', u'upon', u'most', u'hereupon', u'eight', u'but', u'serious', u'nothing', u'such', u'why', u'off', u'a', u'don', u'whereby', u'third', u'i', u'whole', u'noone', u'sometimes', u'well', u'amoungst', u'yours', u'their', u'rather', u'without', u'so', u'five', u'the', u'first', u'with', u'make', u'once']
 
+    def remove_stopwords(self, texts):
+        stopworded_texts = []
+        for text in texts: 
+            # note the naive segmentation; although this is same as the 
+            # keras module does.
+            stopoworded_text = " ".join([t for t in text.split(" ") if not t in self.stopwords])
+            stopworded_texts.append(stopworded_text)
+        return stopworded_texts
+
+
     def preprocess(self, all_docs):
         ''' 
         This fits tokenizer and builds up input vectors (X) from the list 
         of texts in all_texts. Needs to be called before train!
         '''
         self.raw_texts = all_docs
-        self.processed_texts = [] # create a copy for, e.g., stopwording
         if self.stopword:
-            for text in self.raw_texts: 
-                # note the naive segmentation; although this is same as the 
-                # keras module does.
-                processed_text = " ".join([t for t in text.split(" ") if not t in self.stopwords])
-                self.processed_texts.append(processed_text)
+            #for text in self.raw_texts: 
+            self.processed_texts = self.remove_stopwords(self.raw_texts)
         else:
             self.processed_texts = self.raw_texts
 
@@ -739,7 +745,11 @@ class Preprocessor:
             self.word_indices_to_words[idx] = token
 
     def build_sequences(self, texts, pad_documents=False):
-        X = list(self.tokenizer.texts_to_sequences_generator(texts))
+        processed_texts = texts 
+        if self.stopword:
+            processed_texts = self.remove_stopwords(texts)
+
+        X = list(self.tokenizer.texts_to_sequences_generator(processed_texts))
 
         # need to pad the number of sentences, too.
         X = np.array(pad_sequences(X, maxlen=self.max_sent_len))
