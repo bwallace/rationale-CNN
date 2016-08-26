@@ -252,7 +252,8 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     r_CNN.set_final_sentence_model()
 
 
-    return r_CNN, documents, p, X_doc, np.array(y_doc), best_performance
+    # return r_CNN, documents, p, X_doc, np.array(y_doc), best_performance
+    return r_CNN, documents, p, best_performance
 
 
 

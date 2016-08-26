@@ -461,6 +461,7 @@ class RationaleCNN:
         return self.sentence_model 
 
 
+    # @TODO should probably monitor f-score here
     def train_sentence_model(self, train_documents, nb_epoch=5, downsample=True, 
                                 sent_val_split=.2, 
                                 sentence_model_weights_path="sentence_model_weights.hdf5"):
@@ -482,23 +483,19 @@ class RationaleCNN:
             X_d, y_d = d.get_padded_sequences(self.preprocessor)
             X.extend(X_d)
             y.extend(y_d)
-            #X.extend(d.sentence_sequences)
-            #y.extend(d.sentences_y)
-
+   
         X, y = np.asarray(X), np.asarray(y)
             
         X_validation, y_validation = [], []
         for d in train_documents[-validation_size:]:
-            #X_validation.extend(d.sentence_sequences)
-            #y_validation.extend(d.sentences_y)
             X_d, y_d = d.get_padded_sequences(self.preprocessor)
             X_validation.extend(X_d)
             y_validation.extend(y_d)
 
         X_validation, y_validation = np.asarray(X_validation), np.asarray(y_validation)
-        # for now
-        
+ 
         if downsample:
+            # should we downsample *validation* set???
             X_validation, y_validation =  RationaleCNN.balanced_sample(X_validation, y_validation)
 
             cur_loss, best_loss = None, np.inf 
