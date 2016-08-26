@@ -137,7 +137,7 @@ class RationaleCNN:
         if binary:
             _, neg_indices = np.where([y <= 0]) 
             _, pos_indices = np.where([y > 0])
-            sampled_neg_indices = np.random.choice(pos_indices, pos_indices.shape[0], replace=False)
+            sampled_neg_indices = np.random.choice(neg_indices, pos_indices.shape[0], replace=False)
             train_indices = np.concatenate([pos_indices, sampled_neg_indices])
             np.random.shuffle(train_indices) # why not
         else:        
