@@ -600,15 +600,15 @@ class RationaleCNN:
                                     verbose=1,
                                     monitor="f_%s" % self.f_beta, 
                                     save_best_only=True,
-                                    mode="max",
-                                    class_weight={0:1, 1:pos_class_weight})
+                                    mode="max")
 
 
             hist = self.doc_model.fit(X_doc, y_doc, 
                         nb_epoch=nb_epoch, 
                         validation_data=(X_doc_validation, y_doc_validation),
                         callbacks=[checkpointer],
-                        batch_size=batch_size)
+                        batch_size=batch_size,
+                        class_weight={0:1, 1:pos_class_weight})
 
 
         # reload best weights
