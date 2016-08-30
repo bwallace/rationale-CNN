@@ -241,7 +241,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
                                 batch_size=batch_size,
                                 doc_val_split=.2, 
                                 pos_class_weight=pos_class_weight,
-                                document_model_weights_path="document_model_weights.hdf5")
+                                document_model_weights_path=doc_weights_path)
     
 
     # load best weights back in
