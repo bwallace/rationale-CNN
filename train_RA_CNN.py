@@ -220,22 +220,8 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
 
 
     doc_weights_path = "%s_%s.hdf5" % (model_name, run_name)
-    doc_model_path   = "%s_%s_model.h5" % (model_name, run_name)    
+    # doc_model_path   = "%s_%s_model.h5" % (model_name, run_name)    
 
-    '''
-    checkpointer = ModelCheckpoint(filepath=doc_weights_path, 
-                                    verbose=1,
-                                    monitor="val_acc",
-                                    save_best_only=True)
-
-
-    hist = r_CNN.doc_model.fit(X_doc, y_doc, nb_epoch=nb_epoch_doc, 
-                        validation_split=val_split,
-                        callbacks=[checkpointer],
-                        batch_size=batch_size)
-
-    best_performance = np.max(hist.history['val_acc'])
-    '''
     r_CNN.train_document_model(documents, nb_epoch=nb_epoch_doc, 
                                 downsample=downsample,
                                 batch_size=batch_size,
@@ -256,7 +242,12 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
         r_CNN.set_final_sentence_model()
 
 
-    r_CNN.doc_model.save(doc_model_path) # both architecture & weights
+    # previously, we were using the new .save, which bundles
+    # the architecture and weights. however, this is problematic
+    # when one goes to load the model due to the use of custom
+    # metrics
+    # r_CNN.doc_model.save(doc_model_path) # both architecture & weights
+    
     return r_CNN, documents, p
 
 

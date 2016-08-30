@@ -36,7 +36,7 @@ import numpy as np
 
 from keras.optimizers import SGD, RMSprop
 from keras import backend as K 
-from keras.models import Graph, Model, Sequential, load_model
+from keras.models import Graph, Model, Sequential, model_from_json #load_model
 from keras.preprocessing import sequence
 from keras.engine.topology import Layer
 from keras.preprocessing.sequence import pad_sequences
@@ -56,7 +56,8 @@ class RationaleCNN:
     def __init__(self, preprocessor, filters=None, n_filters=20, 
                         sent_dropout=0.5, doc_dropout=0.5, 
                         end_to_end_train=False, f_beta=2,
-                        document_model_path=None):
+                        document_model_architecture_path=None,
+                        document_model_weights_path=None):
         '''
         parameters
         ---
@@ -79,9 +80,17 @@ class RationaleCNN:
         self.sentence_prob_model = None 
         self.f_beta = f_beta
 
-        if document_model_path is not None: 
-            print("loading model from file: %s" % document_model_path)
-            self.doc_model = load_model(document_model_path)
+        if document_model_architecture_path is not None: 
+            assert(document_model_weights_path is not None)
+            
+            print("loading model architecture from file: %s" % document_model_architecture_path)
+
+            with open(document_model_architecture_path) as doc_arch:
+                doc_arch_str = doc_arch.read()
+                self.doc_model = model_from_json(doc_arch_str)
+            
+            self.doc_model.load_weights(document_model_weights_path)
+
             self.set_final_sentence_model() # setup sentence model, too
             print("ok!")
 
