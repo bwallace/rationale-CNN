@@ -598,7 +598,6 @@ class RationaleCNN:
         else:
             checkpointer = ModelCheckpoint(filepath=document_model_weights_path, 
                                     verbose=1,
-                                    monitor="f_%s" % self.f_beta, 
                                     save_best_only=True,
                                     mode="max")
 
