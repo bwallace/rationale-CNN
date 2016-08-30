@@ -596,6 +596,7 @@ class RationaleCNN:
 
 
         else:
+            # using accuracy here because balanced(-ish) data is assumed.
             checkpointer = ModelCheckpoint(filepath=document_model_weights_path, 
                                     verbose=1,
                                     save_best_only=True,
