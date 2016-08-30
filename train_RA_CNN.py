@@ -220,7 +220,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
 
 
     doc_weights_path = "%s_%s.hdf5" % (model_name, run_name)
-    
+    doc_model_path   = "%s_%s_model.h5" % (model_name, run_name)    
 
     '''
     checkpointer = ModelCheckpoint(filepath=doc_weights_path, 
@@ -256,8 +256,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
         r_CNN.set_final_sentence_model()
 
 
-
-    # return r_CNN, documents, p, X_doc, np.array(y_doc), best_performance
+    r_CNN.doc_model.save(doc_model_path) # both architecture & weights
     return r_CNN, documents, p
 
 
@@ -378,8 +377,8 @@ if __name__ == "__main__":
         with open("preprocessor.pickle", 'wb') as outf: 
             pickle.dump(p, outf)
 
-        with open("r_CNN.pickle", 'wb') as outf: 
-            pickle.dump(r_CNN, outf)
+        #with open("r_CNN.pickle", 'wb') as outf: 
+        #    pickle.dump(r_CNN, outf)
 
 
     else:

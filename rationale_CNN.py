@@ -36,7 +36,7 @@ import numpy as np
 
 from keras.optimizers import SGD, RMSprop
 from keras import backend as K 
-from keras.models import Graph, Model, Sequential
+from keras.models import Graph, Model, Sequential, load_model
 from keras.preprocessing import sequence
 from keras.engine.topology import Layer
 from keras.preprocessing.sequence import pad_sequences
@@ -55,7 +55,8 @@ class RationaleCNN:
 
     def __init__(self, preprocessor, filters=None, n_filters=20, 
                         sent_dropout=0.5, doc_dropout=0.5, 
-                        end_to_end_train=False, f_beta=2):
+                        end_to_end_train=False, f_beta=2,
+                        document_model_path=None):
         '''
         parameters
         ---
@@ -77,6 +78,13 @@ class RationaleCNN:
         self.end_to_end_train = end_to_end_train
         self.sentence_prob_model = None 
         self.f_beta = f_beta
+
+        if document_model_path is not None: 
+            print("loading model from file: %s" % document_model_path)
+            self.doc_model = load_model(document_model_path)
+            self.set_final_sentence_model() # setup sentence model, too
+            print("ok!")
+
 
     @staticmethod
     def metric_func_maker(metric_name="f", beta=1):
