@@ -379,7 +379,7 @@ if __name__ == "__main__":
             pickle.dump(p, outf)
 
         with open("r_CNN.pickle", 'wb') as outf: 
-            pickle.dumpe(r_CNN, outf)
+            pickle.dump(r_CNN, outf)
 
 
     else:
