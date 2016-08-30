@@ -82,7 +82,7 @@ class RationaleCNN:
 
         if document_model_architecture_path is not None: 
             assert(document_model_weights_path is not None)
-            
+
             print("loading model architecture from file: %s" % document_model_architecture_path)
 
             with open(document_model_architecture_path) as doc_arch:
@@ -641,7 +641,8 @@ class Document:
         for idx, s in enumerate(sentences):
             if len(s.split(" ")) >= min_sent_len:
                 self.sentences.append(s)
-                self.sentences_y.append(sentences_labels[idx])
+                if not self.sentences_labels is None:
+                    self.sentences_y.append(sentences_labels[idx])
 
         self.sentence_sequences = None
         # length, pre-padding!
