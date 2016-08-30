@@ -354,7 +354,9 @@ if __name__ == "__main__":
     print("running model: %s" % options.model)
 
     if not options.line_search_sent_dropout:
-        train_CNN_rationales_model(data_path, wv_path, model_name=options.model, 
+        r_CNN, documents, p = train_CNN_rationales_model(
+                                    data_path, wv_path, 
+                                    model_name=options.model, 
                                     nb_epoch_sentences=options.sentence_nb_epochs,
                                     nb_epoch_doc=options.document_nb_epochs,
                                     sentence_dropout=options.dropout_sentence, 
@@ -372,6 +374,14 @@ if __name__ == "__main__":
                                     downsample=options.downsample,
                                     stopword=options.stopword,
                                     pos_class_weight=options.pos_class_weight)
+        
+        with open("preprocessor.pickle", 'wb') as outf: 
+            pickle.dump(p, outf)
+
+        with open("r_CNN.pickle", 'wb') as outf: 
+            pickle.dumpe(r_CNN, outf)
+
+
     else:
         print("line searching!")
         line_search_train(data_path, wv_path, model_name=options.model, 
@@ -386,5 +396,7 @@ if __name__ == "__main__":
                                     max_sent_len=options.max_sent_len,
                                     max_doc_len=options.max_doc_len,
                                     max_features=options.max_features,
+                                    end_to_end_train=options.end_to_end_train,
                                     downsample=options.downsample,
-                                    end_to_end_train=options.end_to_end_train)
+                                    stopword=options.stopword,
+                                    pos_class_weight=options.pos_class_weight)
