@@ -167,7 +167,8 @@ class RationaleCNN:
                                             # np.array(random.sample(non_rationale_indices, m)) 
             sampled_non_rationale_indices = np.random.choice(non_rationale_indices, m, replace=False)
 
-            train_indices = np.concatenate([pos_rationale_indices, neg_rationale_indices, sampled_non_rationale_indices])
+            train_indices = np.concatenate([pos_rationale_indices, neg_rationale_indices, 
+                                                sampled_non_rationale_indices])
             
 
         np.random.shuffle(train_indices) # why not
@@ -472,14 +473,12 @@ class RationaleCNN:
         print("model built")
         print(self.sentence_model.summary())
         self.sentence_model.compile(loss='categorical_crossentropy', 
-                                    metrics=["accuracy", 
-                                             RationaleCNN.metric_func_maker(metric_name="f", beta=1)], 
+                                    metrics=["accuracy"], 
                                     optimizer="adagrad")
 
         return self.sentence_model 
 
 
-    # @TODO should probably monitor f-score here
     def train_sentence_model(self, train_documents, nb_epoch=5, downsample=True, 
                                 sent_val_split=.2, 
                                 sentence_model_weights_path="sentence_model_weights.hdf5"):
@@ -517,7 +516,9 @@ class RationaleCNN:
             # note that previously here we were downsampling the validation set, which seems
             # wrong. instead, we focus on monitoring the f1 measure on the entire (probably
             # imbalanced) validation set.
-            cur_f1, best_f1 = None, -np.inf 
+            cur_loss, best_loss = None, np.inf 
+
+            X_validation, y_validation = RationaleCNN.balanced_sample(X_validation, y_validation)
 
             # then draw nb_epoch balanced samples; take one pass on each
             for iter_ in range(nb_epoch):
@@ -530,11 +531,11 @@ class RationaleCNN:
                 # metrics are loss and acc.
                 metric_values = self.sentence_model.evaluate(X_validation, y_validation)
                 print (dict(zip(self.sentence_model.metrics_names, metric_values)))
-                cur_loss, cur_acc, cur_f1 = metric_values
-                if cur_f1 > best_f1:
-                    best_f1 = cur_f1
+                cur_loss, cur_acc = metric_values
+                if cur_loss < best_loss:
+                    best_loss = cur_loss
                     self.sentence_model.save_weights(sentence_model_weights_path, overwrite=True)
-                    print ("new best f-measure! %s" % best_f1)
+                    print ("new best loss! %s" % best_loss)
 
 
         else:
