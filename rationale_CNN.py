@@ -518,7 +518,7 @@ class RationaleCNN:
 
             # @TODO probably it makes sense to create a bunch of balanced
             # validation sets and average over these. 
-            #X_validation, y_validation = RationaleCNN.balanced_sample(X_validation, y_validation)
+            X_validation, y_validation = RationaleCNN.balanced_sample(X_validation, y_validation)
 
             # then draw nb_epoch balanced samples; take one pass on each
             for iter_ in range(nb_epoch):
