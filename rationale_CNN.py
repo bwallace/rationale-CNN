@@ -512,12 +512,10 @@ class RationaleCNN:
         X_validation, y_validation = np.asarray(X_validation), np.asarray(y_validation)
  
         if downsample:
-            ####
-            # note that previously here we were downsampling the validation set, which seems
-            # wrong. instead, we focus on monitoring the f1 measure on the entire (probably
-            # imbalanced) validation set.
             cur_loss, best_loss = None, np.inf 
 
+            # @TODO probably it makes sense to create a bunch of balanced
+            # validation sets and average over these. 
             X_validation, y_validation = RationaleCNN.balanced_sample(X_validation, y_validation)
 
             # then draw nb_epoch balanced samples; take one pass on each
@@ -620,6 +618,7 @@ class RationaleCNN:
             # using accuracy here because balanced(-ish) data is assumed.
             checkpointer = ModelCheckpoint(filepath=document_model_weights_path, 
                                     verbose=1,
+                                    monitor="val_acc",
                                     save_best_only=True,
                                     mode="max")
 
