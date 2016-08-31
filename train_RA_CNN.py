@@ -373,8 +373,7 @@ if __name__ == "__main__":
         doc0 = documents[0]
         pred, rationales =r_CNN.predict_and_rank_sentences_for_doc(doc0, num_rationales=2)
         
-        #with open("r_CNN.pickle", 'wb') as outf: 
-        #    pickle.dump(r_CNN, outf)
+        import pdb; pdb.set_trace()
 
 
     else:
