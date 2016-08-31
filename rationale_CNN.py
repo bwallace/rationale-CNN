@@ -428,6 +428,16 @@ class RationaleCNN:
 
         rationale_indices = sent_preds[:,idx].argsort()[-num_rationales:]
 
+        # here we filter out padded sentences!
+        rationales = []
+        for rationale_idx in rationale_indices:
+
+            if rationale_idx < doc.num_sentences:
+                rationales.append(doc.sentences[rationale_idx])
+
+            if len(rationales) >= num_rationales:
+                return (doc_pred, rationales)
+
         return (doc_pred, rationales)
 
 
@@ -514,7 +524,6 @@ class RationaleCNN:
  
         if downsample:
             cur_loss, best_loss = None, np.inf 
-            
 
             # @TODO probably it makes sense to create a bunch of balanced
             # validation sets and average over these. 
