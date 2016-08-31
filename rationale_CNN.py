@@ -156,7 +156,6 @@ class RationaleCNN:
             _, pos_indices = np.where([y > 0])
             sampled_neg_indices = np.random.choice(neg_indices, pos_indices.shape[0], replace=False)
             train_indices = np.concatenate([pos_indices, sampled_neg_indices])
-            np.random.shuffle(train_indices) # why not
         else:        
             _, pos_rationale_indices = np.where([y[:,0] > 0]) 
             _, neg_rationale_indices = np.where([y[:,1] > 0]) 
@@ -473,7 +472,9 @@ class RationaleCNN:
         print("model built")
         print(self.sentence_model.summary())
         self.sentence_model.compile(loss='categorical_crossentropy', 
-                                    metrics=['accuracy', ], optimizer="adagrad")
+                                    metrics=["accuracy", 
+                                             RationaleCNN.metric_func_maker(metric_name="f", beta=1)], 
+                                    optimizer="adagrad")
 
         return self.sentence_model 
 
@@ -527,8 +528,9 @@ class RationaleCNN:
 
                 # metrics are loss and acc.
                 cur_loss = self.sentence_model.evaluate(X_validation, y_validation)[0]
-                #print ("metrics? %s" % self.sentence_model.metrics_names)
-                print ("cur loss: %s" % cur_loss)
+                print ("metrics? %s" % self.sentence_model.metrics_names)
+                import pdb; pdb.set_trace()
+                #print ("cur loss: %s" % cur_loss)
                 if cur_loss < best_loss:
                     best_loss = cur_loss
                     self.sentence_model.save_weights(sentence_model_weights_path, overwrite=True)
