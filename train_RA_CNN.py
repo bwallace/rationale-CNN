@@ -247,7 +247,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     # when one goes to load the model due to the use of custom
     # metrics
     # r_CNN.doc_model.save(doc_model_path) # both architecture & weights
-    
+
     return r_CNN, documents, p
 
 
@@ -368,6 +368,11 @@ if __name__ == "__main__":
         with open("preprocessor.pickle", 'wb') as outf: 
             pickle.dump(p, outf)
 
+
+        # sanity check!
+        doc0 = documents[0]
+        pred, rationales = model.predict_and_rank_sentences_for_doc(doc0, num_rationales=2)
+        
         #with open("r_CNN.pickle", 'wb') as outf: 
         #    pickle.dump(r_CNN, outf)
 

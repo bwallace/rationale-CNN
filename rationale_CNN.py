@@ -428,6 +428,7 @@ class RationaleCNN:
 
         rationale_indices = sent_preds[:,idx].argsort()[-num_rationales:]
 
+
         return (doc_pred, rationales)
 
 
@@ -493,7 +494,9 @@ class RationaleCNN:
                     validation_size)
 
 
+
         X, y= [], []
+
         # flatten sentences/sentence labels
         for d in train_documents[:-validation_size]:
             X_d, y_d = d.get_padded_sequences(self.preprocessor)
