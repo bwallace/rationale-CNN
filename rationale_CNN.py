@@ -529,7 +529,7 @@ class RationaleCNN:
 
                 # metrics are loss and acc.
                 metric_values = self.sentence_model.evaluate(X_validation, y_validation)
-                print (dic(zip(self.sentence_model.metrics_names, metric_values)))
+                print (dict(zip(self.sentence_model.metrics_names, metric_values)))
                 cur_loss, cur_acc, cur_f1 = metric_values
                 if cur_f1 > best_f1:
                     best_f1 = cur_f1
