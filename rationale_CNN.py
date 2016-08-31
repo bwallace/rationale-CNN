@@ -418,7 +418,7 @@ class RationaleCNN:
         doc_pred = self.doc_model.predict(X_doc)[0][0]
 
         # now rank sentences; 0 indicates 'test time'
-        sent_preds = self.sentence_prob_model(inputs=[X_doc, 0])[0].squeeze()
+        sent_preds = self.sentence_prob_model(inputs=[X_doc, 0])[0].squeeze()[:doc.num_sentences]
 
         # recall: [1, 0, 0] -> positive rationale; [0, 1, 0] -> negative rationale
         idx = 0
@@ -427,8 +427,7 @@ class RationaleCNN:
             idx = 1
 
         rationale_indices = sent_preds[:,idx].argsort()[-num_rationales:]
-        rationales = [doc.sentences[rationale_idx] for rationale_idx in 
-                            rationale_indices if not rationale_idx >= doc.num_sentences]
+
         return (doc_pred, rationales)
 
 
