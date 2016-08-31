@@ -513,10 +513,11 @@ class RationaleCNN:
         X_validation, y_validation = np.asarray(X_validation), np.asarray(y_validation)
  
         if downsample:
-            # should we downsample *validation* set???
-            X_validation, y_validation =  RationaleCNN.balanced_sample(X_validation, y_validation)
-
-            cur_loss, best_loss = None, np.inf 
+            ####
+            # note that previously here we were downsampling the validation set, which seems
+            # wrong. instead, we focus on monitoring the f1 measure on the entire (probably
+            # imbalanced) validation set.
+            cur_f1, best_f1 = None, -np.inf 
 
             # then draw nb_epoch balanced samples; take one pass on each
             for iter_ in range(nb_epoch):
@@ -527,17 +528,17 @@ class RationaleCNN:
                 self.sentence_model.fit(X_tmp, y_tmp, nb_epoch=1)
 
                 # metrics are loss and acc.
-                cur_loss = self.sentence_model.evaluate(X_validation, y_validation)[0]
-                print ("metrics? %s" % self.sentence_model.metrics_names)
-                import pdb; pdb.set_trace()
-                #print ("cur loss: %s" % cur_loss)
-                if cur_loss < best_loss:
-                    best_loss = cur_loss
+                metric_values = self.sentence_model.evaluate(X_validation, y_validation)
+                print (dic(zip(self.sentence_model.metrics_names, metric_values)))
+                cur_loss, cur_acc, cur_f1 = metric_values
+                if cur_f1 > best_f1:
+                    best_f1 = cur_f1
                     self.sentence_model.save_weights(sentence_model_weights_path, overwrite=True)
-                    print ("new best loss! %s" % best_loss)
+                    print ("new best f-measure! %s" % best_f1)
 
 
         else:
+            # implicitly, this focusses on accuracy
             checkpointer = ModelCheckpoint(filepath=sentence_model_weights_path, 
                                            verbose=1, 
                                            save_best_only=True)
