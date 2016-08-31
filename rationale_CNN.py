@@ -427,7 +427,7 @@ class RationaleCNN:
             idx = 1
 
         rationale_indices = sent_preds[:,idx].argsort()[-num_rationales:]
-
+        rationales = [doc.sentences[r_idx] for r_idx in rationale_indices]
 
         return (doc_pred, rationales)
 
@@ -536,6 +536,7 @@ class RationaleCNN:
                     best_loss = cur_loss
                     self.sentence_model.save_weights(sentence_model_weights_path, overwrite=True)
                     print ("new best loss! %s" % best_loss)
+               
 
 
         else:
