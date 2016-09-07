@@ -247,7 +247,6 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     # when one goes to load the model due to the use of custom
     # metrics
     # r_CNN.doc_model.save(doc_model_path) # both architecture & weights
-
     return r_CNN, documents, p
 
 
