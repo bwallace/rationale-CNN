@@ -165,7 +165,10 @@ class RationaleCNN:
             # number of pos/neg rationales. 
             m = pos_rationale_indices.shape[0] + neg_rationale_indices.shape[0]
                                             # np.array(random.sample(non_rationale_indices, m)) 
-            sampled_non_rationale_indices = np.random.choice(non_rationale_indices, m, replace=False)
+
+            sampled_non_rationale_indices = non_rationale_indices
+            if m < non_rationale_indices.shape[0]:
+                sampled_non_rationale_indices = np.random.choice(non_rationale_indices, m, replace=True)
 
             train_indices = np.concatenate([pos_rationale_indices, neg_rationale_indices, 
                                                 sampled_non_rationale_indices])
@@ -251,6 +254,123 @@ class RationaleCNN:
 
 
     def build_RA_CNN_model(self):
+        # input dim is (max_doc_len x max_sent_len) -- eliding the batch size
+        tokens_input = Input(name='input', 
+                            shape=(self.preprocessor.max_doc_len, self.preprocessor.max_sent_len), 
+                            dtype='int32')
+        
+
+        # flatten; create a very wide matrix to hand to embedding layer
+        tokens_reshaped = Reshape([self.preprocessor.max_doc_len*self.preprocessor.max_sent_len])(tokens_input)
+        # embed the tokens; output will be (p.max_doc_len*p.max_sent_len x embedding_dims)
+        # here we should initialize with weights from sentence model embedding layer!
+        # also pass weights for initialization
+        x = Embedding(self.preprocessor.max_features+1, self.preprocessor.embedding_dims, 
+                        name="embedding")(tokens_reshaped)
+
+
+        # reshape to preserve document structure; each doc will now be a
+        # a row in this matrix
+        x = Reshape((1, self.preprocessor.max_doc_len, 
+                     self.preprocessor.max_sent_len*self.preprocessor.embedding_dims), 
+                     name="reshape")(x)
+
+
+        total_sentence_dims = len(self.ngram_filters) * self.n_filters 
+
+        convolutions = []
+        for n_gram in self.ngram_filters:
+            cur_conv = Convolution2D(self.n_filters, 1, 
+                                     n_gram*self.preprocessor.embedding_dims, 
+                                     subsample=(1, self.preprocessor.embedding_dims),
+                                     name="conv2d_"+str(n_gram), activation="relu")(x)
+
+            
+            # this output (n_filters x max_doc_len x 1)
+            one_max = MaxPooling2D(pool_size=(1, self.preprocessor.max_sent_len-n_gram+1), 
+                                   name="pooling_"+str(n_gram))(cur_conv)
+
+            # flip around, to get (1 x max_doc_len x n_filters)
+            permuted = Permute((2,1,3), name="permuted_"+str(n_gram)) (one_max)
+            
+            # drop extra dimension
+            r = Reshape((self.preprocessor.max_doc_len, self.n_filters), 
+                            name="conv_"+str(n_gram))(permuted)
+            
+            convolutions.append(r)
+
+        sent_vectors = merge(convolutions, name="sentence_vectors", mode="concat")
+        # it's not clear that it even makes sense to apply drop out here!
+        sent_vectors = Dropout(self.sent_dropout, name="dropout")(sent_vectors)
+
+        print("end-to-end training is: %s" % self.end_to_end_train)
+        sent_pred_model = Dense(3, activation="softmax", name="sentence_prediction") 
+                                    #trainable=self.end_to_end_train)
+
+        # note that using the sent_preds directly works as expected...
+        sent_preds = TimeDistributed(sent_pred_model, name="sentence_predictions")(sent_vectors)
+
+        ####
+        # updating how we do sentence model 
+        self.sentence_model = Model(input=tokens_input, output=sent_preds)
+        
+        self.sentence_model.compile(loss='categorical_crossentropy', 
+                                    metrics=["accuracy"], 
+                                    optimizer="adagrad")
+        #####
+
+
+        sw_layer = Lambda(lambda x: K.max(x[:,0:2], axis=1), output_shape=(1,)) 
+        
+        # should really explicitly zero out sentences that were padded...
+        sent_weights = TimeDistributed(sw_layer, name="sentence_weights")(sent_preds)
+ 
+        def scale_merge(inputs):
+            sent_vectors, sent_weights = inputs[0], inputs[1]
+            return K.batch_dot(sent_vectors, sent_weights)
+
+        def scale_merge_output_shape(input_shape):
+            # this is expected now to be (None x sentence_vec_length x doc_length)
+            # or, e.g., (None, 96, 200)
+            input_shape_ls = list(input_shape)[0]
+            # should be (batch x sentence embedding), e.g., (None, 96)
+            return (input_shape_ls[0], input_shape_ls[1])
+
+
+        # sent vectors will be, e.g., (None, 200, 96)
+        # -> reshuffle for dot product below in merge -> (None, 96, 200)
+        sent_vectors = Permute((2, 1), name="permuted_sent_vectors")(sent_vectors)
+        doc_vector = merge([sent_vectors, sent_weights], 
+                                        name="doc_vector",
+                                        mode=scale_merge,
+                                        output_shape=scale_merge_output_shape)
+
+
+        # trim extra dim
+        doc_vector = Reshape((total_sentence_dims,), name="reshaped_doc")(doc_vector)
+        doc_vector = Dropout(self.doc_dropout, name="doc_v_dropout")(doc_vector)
+
+        doc_output = Dense(1, activation="sigmoid", name="doc_prediction")(doc_vector)
+        
+        
+        # ... and compile
+        self.doc_model = Model(input=tokens_input, output=doc_output)
+        self.doc_model.compile(metrics=["accuracy", 
+                                        RationaleCNN.metric_func_maker(metric_name="f"), 
+                                        RationaleCNN.metric_func_maker(metric_name="recall"), 
+                                        RationaleCNN.metric_func_maker(metric_name="precision")], 
+                                loss="binary_crossentropy", optimizer="adadelta")
+
+        self.set_final_sentence_model()
+
+        print("rationale CNN model: ")
+        print(self.doc_model.summary())
+
+
+
+
+    '''
+    def build_RA_CNN_model(self):
         if not self.sentence_model_trained:
             print("warning -- sentence model has not been pre-trained!")
         
@@ -304,6 +424,7 @@ class RationaleCNN:
                                      name="conv2d_"+str(n_gram), activation="relu",
                                      weights=[init_weights, biases])(x)
 
+            
             # this output (n_filters x max_doc_len x 1)
             one_max = MaxPooling2D(pool_size=(1, self.preprocessor.max_sent_len-n_gram+1), 
                                    name="pooling_"+str(n_gram))(cur_conv)
@@ -376,7 +497,7 @@ class RationaleCNN:
 
         print("rationale CNN model: ")
         print(self.doc_model.summary())
-
+    '''
 
     def set_final_sentence_model(self):
         '''
@@ -432,13 +553,8 @@ class RationaleCNN:
         return (doc_pred, rationales)
 
 
-
-
+    '''
     def build_sentence_model(self):
-        ''' 
-        Build the *sentence* level model, which operates over, erm, sentences. 
-        The task is to predict which sentences are pos/neg rationales.
-        '''
         tokens_input = Input(name='input', shape=(self.preprocessor.max_sent_len,), dtype='int32')
         x = Embedding(self.preprocessor.max_features+1, self.preprocessor.embedding_dims, 
                       name="embedding",
@@ -477,8 +593,9 @@ class RationaleCNN:
                                     optimizer="adagrad")
 
         return self.sentence_model 
+    '''
 
-
+    '''
     def train_sentence_model(self, train_documents, nb_epoch=5, downsample=True, 
                                 sent_val_split=.2, 
                                 sentence_model_weights_path="sentence_model_weights.hdf5"):
@@ -502,7 +619,6 @@ class RationaleCNN:
             X_d, y_d = d.get_padded_sequences(self.preprocessor)
             X.extend(X_d)
             y.extend(y_d)
-   
         X, y = np.asarray(X), np.asarray(y)
             
         X_validation, y_validation = [], []
@@ -510,7 +626,6 @@ class RationaleCNN:
             X_d, y_d = d.get_padded_sequences(self.preprocessor)
             X_validation.extend(X_d)
             y_validation.extend(y_d)
-
         X_validation, y_validation = np.asarray(X_validation), np.asarray(y_validation)
  
         if downsample:
@@ -554,6 +669,128 @@ class RationaleCNN:
 
         self.sentence_model_trained = True
 
+
+    '''
+
+    def train_sentence_model(self, train_documents, nb_epoch=5, 
+                                downsample=True, 
+                                sent_val_split=.2, 
+                                sentence_model_weights_path="sentence_model_weights2.hdf5"):
+
+        # assumes sentence sequences have been generated!
+        assert(train_documents[0].sentence_sequences is not None)
+
+        # for the validation split, we assume this is at the *document*
+        # level to be consistent with document-level training. 
+        # so if this is .1, for example, the sentences comprising the last 
+        # 10% of the documents will be used for validation
+        validation_size = int(sent_val_split*len(train_documents))
+        print("using sentences from %s docs for sentence prediction validation!" % 
+                    validation_size)
+    
+        #######
+        # build the train and test sets
+        ######
+        X_doc, y_sent = [], []
+        for d in train_documents[:-validation_size]:
+            cur_X, cur_sent_y = d.get_padded_sequences(self.preprocessor)
+            X_doc.append(cur_X)
+            y_sent.append(cur_sent_y)
+        X_doc = np.array(X_doc)
+        y_sent = np.array(y_sent)
+
+
+        X_doc_validation, y_sent_validation = [], []
+        for d in train_documents[-validation_size:]:
+            cur_X, cur_sent_y = d.get_padded_sequences(self.preprocessor)
+            X_doc_validation.append(cur_X)
+            y_sent_validation.append(cur_sent_y)
+        X_doc_validation = np.array(X_doc_validation)
+        y_sent_validation = np.array(y_sent_validation)
+
+
+
+        if downsample:
+            print("downsampling!")
+
+            cur_acc, best_acc = None, -np.inf  # - inf for F-score
+
+            # then draw nb_epoch balanced samples; take one pass on each
+            for iter_ in range(nb_epoch):
+
+                print ("on epoch: %s" % iter_)
+
+                X_temp, y_sent_temp = [], []
+                for i in range(X_doc.shape[0]):
+                    #X_doc_i, y_sent_i in zip(X_doc, y_sent):
+                    X_doc_i = X_doc[i]
+                    y_sent_i = y_sent[i]
+
+                    # downsample each document
+                    
+                    X_doc_i_temp, y_sent_i_temp = RationaleCNN.balanced_sample(X_doc_i, y_sent_i)
+                    
+                    '''
+                    A tricky bit here is that the model expects a given doc length as input,
+                    so here we take a kind of hacky approach of duplicating the downsampled
+                    rows per documents. Basically this assembles 'balanced' pseudo documents
+                    for input to the model.
+                    '''
+
+                    n_target_rows = X_doc_i.shape[0]
+                    if X_doc_i_temp.shape[0] > 0:
+                        # we skip docs with no rationales!
+
+                        num_times_to_dup = (n_target_rows/X_doc_i_temp.shape[0])+1
+
+
+                        X_doc_i_temp  = np.tile(X_doc_i_temp, (num_times_to_dup, 1))[:n_target_rows]
+                        y_sent_i_temp = np.tile(y_sent_i_temp, (num_times_to_dup, 1))[:n_target_rows]
+
+                        X_temp.append(X_doc_i_temp)
+                        y_sent_temp.append(y_sent_i_temp)
+
+
+                X_temp = np.array(X_temp)
+                y_sent_temp = np.array(y_sent_temp)
+                
+
+                # @TODO add batch_size as a param???
+                #import pdb; pdb.set_trace()
+                # Exception: Error when checking model input: expected input to have 3 dimensions, but got array with shape (1440, 1)
+                self.sentence_model.fit(X_temp, y_sent_temp, nb_epoch=1)
+                                         #class_weight={0:1, 1:1})
+
+                cur_val_results = self.sentence_model.evaluate(X_doc_validation, y_sent_validation)
+                out_str = ["%s: %s" % (metric, val) for metric, val in zip(self.sentence_model.metrics_names, cur_val_results)]
+                print ("\n".join(out_str))
+
+                loss, cur_acc = cur_val_results                
+                if cur_acc > best_acc:
+                    best_acc = cur_acc
+                    self.sentence_model.save_weights(sentence_model_weights_path, overwrite=True)
+                    print("new best sentence accuracy: %s\n" % best_acc)
+
+
+        else:
+            # using accuracy here because balanced(-ish) data is assumed.
+            checkpointer = ModelCheckpoint(filepath=sentence_model_weights_path, 
+                                    verbose=1,
+                                    monitor="val_acc",
+                                    save_best_only=True,
+                                    mode="max")
+
+
+            hist = self.sentence_model.fit(X_doc, y_sent, 
+                        nb_epoch=nb_epoch, 
+                        validation_data=(X_doc_validation, y_sent_validation),
+                        callbacks=[checkpointer],
+                        class_weight={0:1, 1:pos_class_weight})
+
+
+        # reload best weights
+        self.sentence_model.load_weights(sentence_model_weights_path)
+    
 
     def train_document_model(self, train_documents, nb_epoch=5, downsample=False, 
                                 doc_val_split=.2, batch_size=50,
