@@ -181,8 +181,6 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     # 1. build & train sentence model #
     ###################################
     if model_name == "rationale-CNN":
-        r_CNN.build_sentence_model()
-
         if nb_epoch_sentences > 0:
             print("pre-training sentence model for %s epochs..." % nb_epoch_sentences)
             r_CNN.train_sentence_model(documents, nb_epoch=nb_epoch_sentences, 
@@ -247,7 +245,6 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     # when one goes to load the model due to the use of custom
     # metrics
     # r_CNN.doc_model.save(doc_model_path) # both architecture & weights
-
     return r_CNN, documents, p
 
 
