@@ -178,7 +178,17 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
                                         end_to_end_train=end_to_end_train)
 
     ###################################
-    # 1. build & train sentence model #
+    # 1. build document model #
+    ###################################
+    if model_name == 'doc-CNN':
+        print("running **doc_CNN**!")
+        r_CNN.build_simple_doc_model()
+    else: 
+        r_CNN.build_RA_CNN_model()
+
+    ###################################
+    # 2. pre-train sentence model, if # 
+    #     appropriate.                #
     ###################################
     if model_name == "rationale-CNN":
         if nb_epoch_sentences > 0:
@@ -188,28 +198,6 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
             print("done.")
 
 
-    ###################################
-    # 2. build & train document model #
-    ###################################
-    if model_name == 'doc-CNN':
-        print("running **doc_CNN**!")
-        r_CNN.build_simple_doc_model()
-    else: 
-        r_CNN.build_RA_CNN_model()
-
-    '''
-    # 8/24
-    X_doc, y_doc = [], []
-    y_sent = []
-    for d in documents:
-        cur_X, cur_sent_y = d.get_padded_sequences(p)
-        X_doc.append(cur_X)
-        y_doc.append(d.doc_y)
-        y_sent.append(cur_sent_y)
-
-    X_doc = np.array(X_doc)
-    y_doc = np.array(y_doc)
-    '''
 
     # write out model architecture
     json_string = r_CNN.doc_model.to_json() 
