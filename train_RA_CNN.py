@@ -211,7 +211,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     r_CNN.train_document_model(documents, nb_epoch=nb_epoch_doc, 
                                 downsample=downsample,
                                 batch_size=batch_size,
-                                doc_val_split=.2, 
+                                doc_val_split=val_split, 
                                 pos_class_weight=pos_class_weight,
                                 document_model_weights_path=doc_weights_path)
     
