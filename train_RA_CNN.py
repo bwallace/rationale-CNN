@@ -355,10 +355,10 @@ if __name__ == "__main__":
 
 
         # sanity check!
-        doc0 = documents[0]
-        pred, rationales =r_CNN.predict_and_rank_sentences_for_doc(doc0, num_rationales=2)
+        #doc0 = documents[0]
+        #pred, rationales =r_CNN.predict_and_rank_sentences_for_doc(doc0, num_rationales=2)
         
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
 
 
     else:
