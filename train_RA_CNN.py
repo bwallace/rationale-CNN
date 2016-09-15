@@ -350,6 +350,9 @@ if __name__ == "__main__":
                                     stopword=options.stopword,
                                     pos_class_weight=options.pos_class_weight)
         
+        # drop word embeddings before we pickle -- we don't need these
+        # because embedding weights are already there.
+        p.word_embeddings = None
         with open("preprocessor.pickle", 'wb') as outf: 
             pickle.dump(p, outf)
 
