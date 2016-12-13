@@ -150,7 +150,7 @@ class RationaleCNN:
         return tuple((1, shape[-1]))
 
     @staticmethod
-    def balanced_sample(X, y, binary=False):
+    def balanced_sample(X, y, sentences=None, binary=False, k=1, n_rows=None):
         if binary:
             _, neg_indices = np.where([y <= 0]) 
             _, pos_indices = np.where([y > 0])
@@ -161,20 +161,41 @@ class RationaleCNN:
             _, neg_rationale_indices = np.where([y[:,1] > 0]) 
             _, non_rationale_indices = np.where([y[:,2] > 0]) 
 
-            # sample a number of non-rationales equal to the total
-            # number of pos/neg rationales. 
-            m = pos_rationale_indices.shape[0] + neg_rationale_indices.shape[0]
-                                            # np.array(random.sample(non_rationale_indices, m)) 
 
-            sampled_non_rationale_indices = non_rationale_indices
-            if m < non_rationale_indices.shape[0]:
-                sampled_non_rationale_indices = np.random.choice(non_rationale_indices, m, replace=True)
+            if n_rows is not None: 
+                # then we will return a matrix comprising n_rows rows, 
+                # repeating positive examples but drawing diverse negative
+                # instances
+                num_rationale_indices = n_rows / 2.0
+                if pos_rationale_indices.shape[0] > 0:
+                    rationale_indices = np.random.choice(pos_rationale_indices, num_rationale_indices, replace=True)
+                else: 
+                    rationale_indices = np.random.choice(neg_rationale_indices, num_rationale_indices, replace=True)
 
-            train_indices = np.concatenate([pos_rationale_indices, neg_rationale_indices, 
-                                                sampled_non_rationale_indices])
+                # sample the rest as `negative' (neutral) instances
+                num_non_rationales = n_rows - num_rationale_indices
+                sampled_non_rationale_indices = np.random.choice(non_rationale_indices, num_non_rationales, replace=True)
+                train_indices = np.concatenate([rationale_indices, sampled_non_rationale_indices])
+            
+            else:
+
+                # sample a number of non-rationales equal to the total
+                # number of pos/neg rationales * k
+                m = k*(pos_rationale_indices.shape[0] + neg_rationale_indices.shape[0])
+                                                # np.array(random.sample(non_rationale_indices, m)) 
+
+                sampled_non_rationale_indices = non_rationale_indices
+                if m < non_rationale_indices.shape[0]:
+                    sampled_non_rationale_indices = np.random.choice(non_rationale_indices, m, replace=True)
+
+                train_indices = np.concatenate([pos_rationale_indices, neg_rationale_indices, 
+                                                    sampled_non_rationale_indices])
             
 
+
         np.random.shuffle(train_indices) # why not
+        if sentences is not None: 
+            return X[train_indices,:], y[train_indices], [sentences[idx] for idx in train_indices]
         return X[train_indices,:], y[train_indices]
 
 
@@ -426,25 +447,32 @@ class RationaleCNN:
                     validation_size)
     
         #######
-        # build the train and test sets
+        # build the train and validation sets
+        # @TODO redundant blocks...
         ######
-        X_doc, y_sent = [], []
+        X_doc, y_sent, train_sentences = [], [], []
         for d in train_documents[:-validation_size]:
             cur_X, cur_sent_y = d.get_padded_sequences(self.preprocessor)
-            X_doc.append(cur_X)
-            y_sent.append(cur_sent_y)
+            if np.max(cur_sent_y[:,:2]) > 0:            
+                X_doc.append(cur_X)
+                y_sent.append(cur_sent_y)
+                train_sentences.append(d.padded_sentences)
+
         X_doc = np.array(X_doc)
         y_sent = np.array(y_sent)
 
 
-        X_doc_validation, y_sent_validation = [], []
+        X_doc_validation, y_sent_validation, validation_sentences = [], [], []
         for d in train_documents[-validation_size:]:
             cur_X, cur_sent_y = d.get_padded_sequences(self.preprocessor)
-            X_doc_validation.append(cur_X)
-            y_sent_validation.append(cur_sent_y)
+            if np.max(cur_sent_y[:,:2]) > 0:
+                # 12/13: only validate on samples that actually have at 
+                # least one rationale!
+                X_doc_validation.append(cur_X)
+                y_sent_validation.append(cur_sent_y)
+                validation_sentences.append(d.padded_sentences)
         X_doc_validation = np.array(X_doc_validation)
         y_sent_validation = np.array(y_sent_validation)
-
 
 
         if downsample:
@@ -453,45 +481,44 @@ class RationaleCNN:
             cur_acc, best_acc = None, -np.inf  # - inf for F-score
 
             # then draw nb_epoch balanced samples; take one pass on each
+            skip_count = 0
             for iter_ in range(nb_epoch):
 
                 print ("on epoch: %s" % iter_)
 
-                X_temp, y_sent_temp = [], []
+                X_temp, y_sent_temp, sentences_temp = [], [], []
                 for i in range(X_doc.shape[0]):
-                    #X_doc_i, y_sent_i in zip(X_doc, y_sent):
+                    # i is indexing the document here!
                     X_doc_i = X_doc[i]
                     y_sent_i = y_sent[i]
 
                     # downsample each document
-                    
-                    X_doc_i_temp, y_sent_i_temp = RationaleCNN.balanced_sample(X_doc_i, y_sent_i)
-                    
+                        
                     '''
                     A tricky bit here is that the model expects a given doc length as input,
                     so here we take a kind of hacky approach of duplicating the downsampled
                     rows per documents. Basically this assembles 'balanced' pseudo documents
                     for input to the model.
                     '''
-
                     n_target_rows = X_doc_i.shape[0]
-                    if X_doc_i_temp.shape[0] > 0:
-                        # we skip docs with no rationales!
+                    X_doc_i_temp, y_sent_i_temp, sampled_sentences = RationaleCNN.balanced_sample(X_doc_i, y_sent_i, 
+                                                                                sentences=train_sentences[i],
+                                                                                n_rows=n_target_rows)
+                                                                                #doc=train_documents[:-validation_size][i])
+                   
 
-                        num_times_to_dup = (n_target_rows/X_doc_i_temp.shape[0])+1
+                    X_temp.append(X_doc_i_temp)
+                    y_sent_temp.append(y_sent_i_temp)
+                    sentences_temp.append(sampled_sentences)
 
+                
 
-                        X_doc_i_temp  = np.tile(X_doc_i_temp, (num_times_to_dup, 1))[:n_target_rows]
-                        y_sent_i_temp = np.tile(y_sent_i_temp, (num_times_to_dup, 1))[:n_target_rows]
-
-                        X_temp.append(X_doc_i_temp)
-                        y_sent_temp.append(y_sent_i_temp)
-
+ 
 
                 X_temp = np.array(X_temp)
                 y_sent_temp = np.array(y_sent_temp)
                 
-
+                #import pdb; pdb.set_trace()
                 self.sentence_model.fit(X_temp, y_sent_temp, nb_epoch=1)
                                          #class_weight={0:1, 1:1})
 
@@ -643,6 +670,10 @@ class Document:
         self.n = len(self.sentences)
 
 
+    def get_padded_sentences():
+        # sometimes useful for indexing purposes
+        return self.padded_sentences
+
     def __len__(self):
         return self.n 
 
@@ -653,6 +684,8 @@ class Document:
         integer sequences here.
         '''
         self.sentence_sequences = p.build_sequences(self.sentences)
+        self.padded_sentences = self.sentences + [''] * (p.max_doc_len - self.n)
+
 
     def get_padded_sequences_for_X_y(self, p, X, y):
         n_sentences = X.shape[0]
