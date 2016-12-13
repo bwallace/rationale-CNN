@@ -303,11 +303,10 @@ class RationaleCNN:
         # it's not clear that it even makes sense to apply drop out here!
         sent_vectors = Dropout(self.sent_dropout, name="dropout")(sent_vectors)
 
+        # note that if end_to_end_train is False, we 'freeze' the sentence
+        # softmax weights after pretraining the sentence model
         print("end-to-end training is: %s" % self.end_to_end_train)
         sent_pred_model = Dense(3, activation="softmax", name="sentence_prediction") 
-                                    #trainable=self.end_to_end_train)
-
-        # note that using the sent_preds directly works as expected...
         sent_preds = TimeDistributed(sent_pred_model, name="sentence_predictions")(sent_vectors)
 
         ####
@@ -377,7 +376,7 @@ class RationaleCNN:
         self.sentence_prob_model = sent_model
 
 
-    def predict_and_rank_sentences_for_doc(self, doc, num_rationales=3):
+    def predict_and_rank_sentences_for_doc(self, doc, num_rationales=3, threshold=0):
         '''
         Given a Document instance, make doc-level prediction and return
         rationales.
@@ -413,7 +412,7 @@ class RationaleCNN:
     def train_sentence_model(self, train_documents, nb_epoch=5, 
                                 downsample=True, 
                                 sent_val_split=.2, 
-                                sentence_model_weights_path="sentence_model_weights2.hdf5"):
+                                sentence_model_weights_path="sentence_model_weights.hdf5"):
 
         # assumes sentence sequences have been generated!
         assert(train_documents[0].sentence_sequences is not None)
@@ -493,9 +492,6 @@ class RationaleCNN:
                 y_sent_temp = np.array(y_sent_temp)
                 
 
-                # @TODO add batch_size as a param???
-                #import pdb; pdb.set_trace()
-                # Exception: Error when checking model input: expected input to have 3 dimensions, but got array with shape (1440, 1)
                 self.sentence_model.fit(X_temp, y_sent_temp, nb_epoch=1)
                                          #class_weight={0:1, 1:1})
 
@@ -528,7 +524,20 @@ class RationaleCNN:
 
         # reload best weights
         self.sentence_model.load_weights(sentence_model_weights_path)
-    
+        
+        # 12/13/16 -- check if leaving sentence model trainable
+        if not self.end_to_end_train:
+            print ("freezing sentence prediction layer weights!")
+            sent_softmax_layer = self.doc_model.get_layer("sentence_predictions")
+            sent_softmax_layer.trainable = False 
+
+            # after freezing these weights, recompile doc model (as per 
+            # https://keras.io/getting-started/faq/#how-can-i-freeze-keras-layers)
+            self.doc_model.compile(metrics=["accuracy",     
+                                        RationaleCNN.metric_func_maker(metric_name="f", beta=self.f_beta), 
+                                        RationaleCNN.metric_func_maker(metric_name="recall"), 
+                                        RationaleCNN.metric_func_maker(metric_name="precision")], 
+                                        loss="binary_crossentropy", optimizer="adadelta")
 
     def train_document_model(self, train_documents, nb_epoch=5, downsample=False, 
                                 doc_val_split=.2, batch_size=50,
