@@ -768,7 +768,15 @@ class Preprocessor:
         for text in texts: 
             # note the naive segmentation; although this is same as the 
             # keras module does.
-            stopworded_text = " ".join([t for t in text.split(" ") if not t.lower() in self.stopwords])
+            #stopworded_text = " ".join([t for t in text.split(" ") if not t.lower() in self.stopwords])
+            stopworded_text = []
+            for t in text.split(" "):
+                if not t in self.stopwords:
+                    if t.isdigit():
+                        t = "numbernumbernumber"
+                    stopworded_text.append(t)
+            #stopworded_text = " ".join([t for t in text.split(" ") if not t in self.stopwords])
+            stopworded_text = " ".join(stopworded_text)
             stopworded_texts.append(stopworded_text)
         return stopworded_texts
 
