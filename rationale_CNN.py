@@ -507,7 +507,7 @@ class RationaleCNN:
                                                                                 n_rows=n_target_rows)
                                                                                 #doc=train_documents[:-validation_size][i])
                    
-                    #import pdb; pdb.set_trace()
+                    
                     X_temp.append(X_doc_i_temp)
                     y_sent_temp.append(y_sent_i_temp)
                     sentences_temp.append(sampled_sentences)
