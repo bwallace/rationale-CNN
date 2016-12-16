@@ -697,7 +697,8 @@ class Document:
             X = X[:p.max_doc_len]
             y = y[:p.max_doc_len]
         elif n_sentences < p.max_doc_len:
-            dummy_rows = p.max_features * np.ones((p.max_doc_len-n_sentences, p.max_sent_len), dtype='int32') 
+            #dummy_rows = p.max_features * np.ones((p.max_doc_len-n_sentences, p.max_sent_len), dtype='int32') 
+            dummy_rows = 0 * np.ones((p.max_doc_len-n_sentences, p.max_sent_len), dtype='int32')
             X = np.vstack((X, dummy_rows))
         
             dummy_lbls = [np.array([0,0,1]) for _ in range(p.max_doc_len-n_sentences)]
@@ -711,7 +712,8 @@ class Document:
             X = X[:p.max_doc_len]
         elif n_sentences < p.max_doc_len:
             # pad
-            dummy_rows = p.max_features * np.ones((p.max_doc_len-n_sentences, p.max_sent_len), dtype='int32') 
+            #dummy_rows = p.max_features * np.ones((p.max_doc_len-n_sentences, p.max_sent_len), dtype='int32') 
+            dummy_rows = 0 * np.ones((p.max_doc_len-n_sentences, p.max_sent_len), dtype='int32')
             X = np.vstack((X, dummy_rows))
         return np.array(X)
 
