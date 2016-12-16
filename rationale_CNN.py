@@ -49,7 +49,7 @@ from keras.utils.np_utils import accuracy
 from keras.preprocessing.text import text_to_word_sequence, Tokenizer
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.constraints import maxnorm
-
+from keras.regularizers import l2
 
 class RationaleCNN:
 
@@ -327,7 +327,7 @@ class RationaleCNN:
         # note that if end_to_end_train is False, we 'freeze' the sentence
         # softmax weights after pretraining the sentence model
         print("end-to-end training is: %s" % self.end_to_end_train)
-        sent_pred_model = Dense(3, activation="softmax", name="sentence_prediction") 
+        sent_pred_model = Dense(3, activation="softmax", name="sentence_prediction", W_regularizer=l2(0.01)) 
         sent_preds = TimeDistributed(sent_pred_model, name="sentence_predictions")(sent_vectors)
 
         ####
@@ -418,6 +418,7 @@ class RationaleCNN:
         # now rank sentences; 0 indicates 'test time'
         sent_preds = self.sentence_prob_model(inputs=[X_doc, 0])[0].squeeze()[:doc.num_sentences]
 
+        # bias_prob = 1 --> low risk 
         # recall: [1, 0, 0] -> positive rationale; [0, 1, 0] -> negative rationale
         idx = 0
         if doc_pred < .5:
@@ -506,7 +507,7 @@ class RationaleCNN:
                                                                                 n_rows=n_target_rows)
                                                                                 #doc=train_documents[:-validation_size][i])
                    
-
+                    #import pdb; pdb.set_trace()
                     X_temp.append(X_doc_i_temp)
                     y_sent_temp.append(y_sent_i_temp)
                     sentences_temp.append(sampled_sentences)
@@ -518,7 +519,7 @@ class RationaleCNN:
                 X_temp = np.array(X_temp)
                 y_sent_temp = np.array(y_sent_temp)
                 
-                #import pdb; pdb.set_trace()
+            
                 self.sentence_model.fit(X_temp, y_sent_temp, nb_epoch=1)
                                          #class_weight={0:1, 1:1})
 
@@ -552,6 +553,9 @@ class RationaleCNN:
         # reload best weights
         self.sentence_model.load_weights(sentence_model_weights_path)
         
+
+        import pdb; pdb.set_trace() 
+
         # 12/13/16 -- check if leaving sentence model trainable
         if not self.end_to_end_train:
             print ("freezing sentence prediction layer weights!")
@@ -753,14 +757,16 @@ class Preprocessor:
         
         self.stopword = stopword
         # lifted directly from spacy's EN list
-        self.stopwords = [u'all', u'six', u'just', u'less', u'being', u'indeed', u'over', u'move', u'anyway', u'four', u'not', u'own', u'through', u'using', u'fify', u'where', u'mill', u'only', u'find', u'before', u'one', u'whose', u'system', u'how', u'somewhere', u'much', u'thick', u'show', u'had', u'enough', u'should', u'to', u'must', u'whom', u'seeming', u'yourselves', u'under', u'ours', u'two', u'has', u'might', u'thereafter', u'latterly', u'do', u'them', u'his', u'around', u'than', u'get', u'very', u'de', u'none', u'cannot', u'every', u'un', u'they', u'front', u'during', u'thus', u'now', u'him', u'nor', u'name', u'regarding', u'several', u'hereafter', u'did', u'always', u'who', u'didn', u'whither', u'this', u'someone', u'either', u'each', u'become', u'thereupon', u'sometime', u'side', u'towards', u'therein', u'twelve', u'because', u'often', u'ten', u'our', u'doing', u'km', u'eg', u'some', u'back', u'used', u'up', u'go', u'namely', u'computer', u'are', u'further', u'beyond', u'ourselves', u'yet', u'out', u'even', u'will', u'what', u'still', u'for', u'bottom', u'mine', u'since', u'please', u'forty', u'per', u'its', u'everything', u'behind', u'does', u'various', u'above', u'between', u'it', u'neither', u'seemed', u'ever', u'across', u'she', u'somehow', u'be', u'we', u'full', u'never', u'sixty', u'however', u'here', u'otherwise', u'were', u'whereupon', u'nowhere', u'although', u'found', u'alone', u're', u'along', u'quite', u'fifteen', u'by', u'both', u'about', u'last', u'would', u'anything', u'via', u'many', u'could', u'thence', u'put', u'against', u'keep', u'etc', u'amount', u'became', u'ltd', u'hence', u'onto', u'or', u'con', u'among', u'already', u'co', u'afterwards', u'formerly', u'within', u'seems', u'into', u'others', u'while', u'whatever', u'except', u'down', u'hers', u'everyone', u'done', u'least', u'another', u'whoever', u'moreover', u'couldnt', u'throughout', u'anyhow', u'yourself', u'three', u'from', u'her', u'few', u'together', u'top', u'there', u'due', u'been', u'next', u'anyone', u'eleven', u'cry', u'call', u'therefore', u'interest', u'then', u'thru', u'themselves', u'hundred', u'really', u'sincere', u'empty', u'more', u'himself', u'elsewhere', u'mostly', u'on', u'fire', u'am', u'becoming', u'hereby', u'amongst', u'else', u'part', u'everywhere', u'too', u'kg', u'herself', u'former', u'those', u'he', u'me', u'myself', u'made', u'twenty', u'these', u'was', u'bill', u'cant', u'us', u'until', u'besides', u'nevertheless', u'below', u'anywhere', u'nine', u'can', u'whether', u'of', u'your', u'toward', u'my', u'say', u'something', u'and', u'whereafter', u'whenever', u'give', u'almost', u'wherever', u'is', u'describe', u'beforehand', u'herein', u'doesn', u'an', u'as', u'itself', u'at', u'have', u'in', u'seem', u'whence', u'ie', u'any', u'fill', u'again', u'hasnt', u'inc', u'thereby', u'thin', u'no', u'perhaps', u'latter', u'meanwhile', u'when', u'detail', u'same', u'wherein', u'beside', u'also', u'that', u'other', u'take', u'which', u'becomes', u'you', u'if', u'nobody', u'unless', u'whereas', u'see', u'though', u'may', u'after', u'upon', u'most', u'hereupon', u'eight', u'but', u'serious', u'nothing', u'such', u'why', u'off', u'a', u'don', u'whereby', u'third', u'i', u'whole', u'noone', u'sometimes', u'well', u'amoungst', u'yours', u'their', u'rather', u'without', u'so', u'five', u'the', u'first', u'with', u'make', u'once']
+        #self.stopwords = [u'all', u'six', u'just', u'less', u'being', u'indeed', u'over', u'move', u'anyway', u'four', u'not', u'own', u'through', u'using', u'fify', u'where', u'mill', u'only', u'find', u'before', u'one', u'whose', u'system', u'how', u'somewhere', u'much', u'thick', u'show', u'had', u'enough', u'should', u'to', u'must', u'whom', u'seeming', u'yourselves', u'under', u'ours', u'two', u'has', u'might', u'thereafter', u'latterly', u'do', u'them', u'his', u'around', u'than', u'get', u'very', u'de', u'none', u'cannot', u'every', u'un', u'they', u'front', u'during', u'thus', u'now', u'him', u'nor', u'name', u'regarding', u'several', u'hereafter', u'did', u'always', u'who', u'didn', u'whither', u'this', u'someone', u'either', u'each', u'become', u'thereupon', u'sometime', u'side', u'towards', u'therein', u'twelve', u'because', u'often', u'ten', u'our', u'doing', u'km', u'eg', u'some', u'back', u'used', u'up', u'go', u'namely', u'computer', u'are', u'further', u'beyond', u'ourselves', u'yet', u'out', u'even', u'will', u'what', u'still', u'for', u'bottom', u'mine', u'since', u'please', u'forty', u'per', u'its', u'everything', u'behind', u'does', u'various', u'above', u'between', u'it', u'neither', u'seemed', u'ever', u'across', u'she', u'somehow', u'be', u'we', u'full', u'never', u'sixty', u'however', u'here', u'otherwise', u'were', u'whereupon', u'nowhere', u'although', u'found', u'alone', u're', u'along', u'quite', u'fifteen', u'by', u'both', u'about', u'last', u'would', u'anything', u'via', u'many', u'could', u'thence', u'put', u'against', u'keep', u'etc', u'amount', u'became', u'ltd', u'hence', u'onto', u'or', u'con', u'among', u'already', u'co', u'afterwards', u'formerly', u'within', u'seems', u'into', u'others', u'while', u'whatever', u'except', u'down', u'hers', u'everyone', u'done', u'least', u'another', u'whoever', u'moreover', u'couldnt', u'throughout', u'anyhow', u'yourself', u'three', u'from', u'her', u'few', u'together', u'top', u'there', u'due', u'been', u'next', u'anyone', u'eleven', u'cry', u'call', u'therefore', u'interest', u'then', u'thru', u'themselves', u'hundred', u'really', u'sincere', u'empty', u'more', u'himself', u'elsewhere', u'mostly', u'on', u'fire', u'am', u'becoming', u'hereby', u'amongst', u'else', u'part', u'everywhere', u'too', u'kg', u'herself', u'former', u'those', u'he', u'me', u'myself', u'made', u'twenty', u'these', u'was', u'bill', u'cant', u'us', u'until', u'besides', u'nevertheless', u'below', u'anywhere', u'nine', u'can', u'whether', u'of', u'your', u'toward', u'my', u'say', u'something', u'and', u'whereafter', u'whenever', u'give', u'almost', u'wherever', u'is', u'describe', u'beforehand', u'herein', u'doesn', u'an', u'as', u'itself', u'at', u'have', u'in', u'seem', u'whence', u'ie', u'any', u'fill', u'again', u'hasnt', u'inc', u'thereby', u'thin', u'no', u'perhaps', u'latter', u'meanwhile', u'when', u'detail', u'same', u'wherein', u'beside', u'also', u'that', u'other', u'take', u'which', u'becomes', u'you', u'if', u'nobody', u'unless', u'whereas', u'see', u'though', u'may', u'after', u'upon', u'most', u'hereupon', u'eight', u'but', u'serious', u'nothing', u'such', u'why', u'off', u'a', u'don', u'whereby', u'third', u'i', u'whole', u'noone', u'sometimes', u'well', u'amoungst', u'yours', u'their', u'rather', u'without', u'so', u'five', u'the', u'first', u'with', u'make', u'once']
+        self.stopwords = ["a", "about", "again", "all", "almost", "also", "although", "always", "among", "an", "and", "another", "any", "are", "as", "at", "b", "be", "because", "been", "before", "being", "between", "both", "but", "by", "c", "can", "could", "did", "do", "d", "does", "each", "either", "enough", "etc", "f", "for", "from", "had", "has", "have", "here", "how", "h", "i", "if", "in", "into", "is", "it", "its", "j", "just", "k", "made", "make", "may", "must", "n", "o", "of", "often", "on", "p", "q", "r", "s", "so", "that", "the", "them", "then", "their", "those", "thus", "to", "t", "u", "use", "used", "v", "w", "x", "y", "z", "we", "was"]
+
 
     def remove_stopwords(self, texts):
         stopworded_texts = []
         for text in texts: 
             # note the naive segmentation; although this is same as the 
             # keras module does.
-            stopworded_text = " ".join([t for t in text.split(" ") if not t in self.stopwords])
+            stopworded_text = " ".join([t for t in text.split(" ") if not t.lower() in self.stopwords])
             stopworded_texts.append(stopworded_text)
         return stopworded_texts
 
