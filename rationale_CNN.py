@@ -554,8 +554,6 @@ class RationaleCNN:
         self.sentence_model.load_weights(sentence_model_weights_path)
         
 
-        import pdb; pdb.set_trace() 
-
         # 12/13/16 -- check if leaving sentence model trainable
         if not self.end_to_end_train:
             print ("freezing sentence prediction layer weights!")
