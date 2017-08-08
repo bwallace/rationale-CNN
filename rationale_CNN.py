@@ -36,7 +36,7 @@ import numpy as np
 
 from keras.optimizers import SGD, RMSprop
 from keras import backend as K 
-from keras.models import Graph, Model, Sequential, model_from_json #load_model
+from keras.models import Model, Sequential, model_from_json #load_model
 from keras.preprocessing import sequence
 from keras.engine.topology import Layer
 from keras.preprocessing.sequence import pad_sequences
