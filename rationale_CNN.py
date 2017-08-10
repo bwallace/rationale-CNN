@@ -341,7 +341,7 @@ class RationaleCNN:
         # note that if end_to_end_train is False, we 'freeze' the sentence
         # softmax weights after pretraining the sentence model
         print("end-to-end training is: %s" % self.end_to_end_train)
-        sent_pred_model = Dense(3, activation="softmax", name="sentence_prediction", W_regularizer=l2(0.01))
+        sent_pred_model = Dense(3, activation="softmax", name="sentence_prediction", kernel_regularizer=l2(0.01))
         sent_preds = TimeDistributed(sent_pred_model, name="sentence_predictions")(sent_vectors)
 
         ####
@@ -756,7 +756,7 @@ class Preprocessor:
         '''
 
         self.max_features = max_features  
-        self.tokenizer = Tokenizer(nb_words=self.max_features)#num_words=self.max_features)
+        self.tokenizer = Tokenizer(num_words=self.max_features)#num_words=self.max_features)
         self.max_sent_len = max_sent_len  # the max sentence length! @TODO rename; this is confusing. 
         self.max_doc_len = max_doc_len # w.r.t. number of sentences!
 
