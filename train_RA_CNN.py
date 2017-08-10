@@ -27,7 +27,8 @@ from rationale_CNN import Document
 
 
 def load_trained_w2v_model(path="/work/03213/bwallace/maverick/RoB_CNNs/PubMed-w2v.bin"):
-    m = Word2Vec.load_word2vec_format(path, binary=True)
+    m = gensim.models.KeyedVectors.load_word2vec_format(path, binary=True)
+    #m = Word2Vec.load_word2vec_format(path, binary=True)
     return m
 
 def read_data(path="/work/03213/bwallace/maverick/RoB-keras/RoB-data/train-Xy-w-sentences2-Random-sequence-generation.txt"):
@@ -171,7 +172,7 @@ def train_CNN_rationales_model(data_path, wvs_path, documents=None, test_mode=Fa
     for d in documents: 
         d.generate_sequences(p)
 
-    r_CNN = rationale_CNN.RationaleCNN(p, filters=[3,4,5], 
+    r_CNN = rationale_CNN.RationaleCNN(p, filters=[1,2,3], 
                                         n_filters=n_filters, 
                                         sent_dropout=sentence_dropout, 
                                         doc_dropout=document_dropout,
@@ -350,6 +351,9 @@ if __name__ == "__main__":
                                     stopword=options.stopword,
                                     pos_class_weight=options.pos_class_weight)
         
+    
+        import pdb; pdb.set_trace() 
+
         # drop word embeddings before we pickle -- we don't need these
         # because embedding weights are already there.
         p.word_embeddings = None
