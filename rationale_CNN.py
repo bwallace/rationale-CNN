@@ -768,7 +768,8 @@ class Preprocessor:
             # note that these are only for initialization;
             # they will be tuned!
             self.use_pretrained_embeddings = True
-            self.embedding_dims = wvs.vector_size
+            # for new gensim format
+            self.embedding_dims = m.syn0.shape[1] #wvs.vector_size
             self.word_embeddings = wvs
 
         
