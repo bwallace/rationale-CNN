@@ -119,18 +119,18 @@ class RationaleCNN:
             num_pred = K.sum(y_pred_binary)
             tp = K.sum(y * y_pred_binary)
 
-            recall = K.switch(num_true>0, tp / num_true, 0)
+            recall = K.switch(num_true>0, tp / num_true, 0.0)
             if return_recall:
                 return recall
 
-            precision = K.switch(num_pred>0, tp / num_pred, 0)
+            precision = K.switch(num_pred>0, tp / num_pred, 0.0)
             if return_precision:
                 return precision 
 
             precision_recall_sum = recall + (beta*precision)
 
             return K.switch(precision_recall_sum>0, 
-                             (beta+1)*((precision*recall)/(precision_recall_sum)), 0)
+                             (beta+1)*((precision*recall)/(precision_recall_sum)), 0.0)
 
 
         f_beta_score.__name__ = func_name
