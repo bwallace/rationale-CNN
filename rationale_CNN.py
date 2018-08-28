@@ -44,7 +44,7 @@ from keras.preprocessing import sequence
 from keras.engine.topology import Layer
 from keras.preprocessing.sequence import pad_sequences
 from keras.layers import Input, Embedding, Dense, merge
-from keras.layers.merge import concatenate
+from keras.layers.merge import concatenate, dot
 from keras.layers.core import Dense, Dropout, Activation, Flatten, Reshape, Permute, Lambda
 from keras.layers.wrappers import TimeDistributed
 from keras.layers.embeddings import Embedding
@@ -241,7 +241,6 @@ class RationaleCNN:
             
             convolutions.append(r)
 
-        #sent_vectors = merge(convolutions, name="sentence_vectors", mode="concat")
         sent_vectors = concatenate(convolutions, name="sentence_vectors")
         sent_vectors = Dropout(self.sent_dropout, name="dropout")(sent_vectors)
 
@@ -333,10 +332,8 @@ class RationaleCNN:
                             name="conv_"+str(n_gram))(permuted)
             
             convolutions.append(r)
-
-        sent_vectors = merge(convolutions, name="sentence_vectors", mode="concat")
-        # it's not clear that it even makes sense to apply drop out here!
-        #sent_vectors = Dropout(self.sent_dropout, name="dropout")(sent_vectors)
+  
+        sent_vectors = concatenate(convolutions, name="sentence_vectors")
 
         # note that if end_to_end_train is False, we 'freeze' the sentence
         # softmax weights after pretraining the sentence model
@@ -360,7 +357,8 @@ class RationaleCNN:
         
         # should really explicitly zero out sentences that were padded...
         sent_weights = TimeDistributed(sw_layer, name="sentence_weights")(sent_preds)
- 
+        
+        '''
         def scale_merge(inputs):
             sent_vectors, sent_weights = inputs[0], inputs[1]
             return K.batch_dot(sent_vectors, sent_weights)
@@ -371,7 +369,7 @@ class RationaleCNN:
             input_shape_ls = list(input_shape)[0]
             # should be (batch x sentence embedding), e.g., (None, 96)
             return (input_shape_ls[0], input_shape_ls[1])
-
+        '''
 
         # sent vectors will be, e.g., (None, 200, 96)
         # -> reshuffle for dot product below in merge -> (None, 96, 200)
@@ -379,11 +377,13 @@ class RationaleCNN:
 
         # 8/10/2017 -- need to rework this into one of the new merge layers (dot?)
         #               this merge will eventually be deprecated apparently
-        doc_vector = merge([sent_vectors, sent_weights], 
-                                        name="doc_vector",
-                                        mode=scale_merge,
-                                        output_shape=scale_merge_output_shape)
-        #doc_vector = 
+        #doc_vector = merge([sent_vectors, sent_weights], 
+        #                                name="doc_vector",
+        #                                mode=scale_merge,
+        #                                output_shape=scale_merge_output_shape)
+        
+        #import pdb; pdb.set_trace()
+        doc_vector = dot([sent_vectors, sent_weights], axes=[2,1], name="doc_vector")
 
         # trim extra dim
         doc_vector = Reshape((total_sentence_dims,), name="reshaped_doc")(doc_vector)
